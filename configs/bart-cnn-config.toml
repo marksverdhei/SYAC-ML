@@ -1,0 +1,42 @@
+[datapaths]
+train_path = "../data/train_set.tsv"
+val_path = "../data/val_set.tsv"
+test_path = "../data/test_set.tsv"
+
+[models]
+
+[preprocessor]
+sep = '<\s><s>'
+cased = true
+
+[train]
+tokenizer_path = "facebook/bart-large-cnn"
+model_path = "facebook/bart-large-cnn"
+metrics = ["rouge"]
+
+
+# Make sure to measure against new sep token or 
+# 
+# remove_sep_occurences = true
+# sep = '|'
+
+
+[train.training_args]
+output_dir = "./results/bart-large-cnn"
+num_train_epochs = 1
+per_device_train_batch_size = 1
+per_device_eval_batch_size = 16
+warmup_steps = 500
+learning_rate = 3e-5
+weight_decay = 0.01
+logging_dir = "./logs/bart-large-cnn"
+logging_steps = 50
+save_steps = 0
+evaluation_strategy = "epoch"
+
+[evaluate]
+# model = "qa"
+# # model_path = "facebook/bart-large-cnn"
+# model_path = 'C:\Users\Markus\Desktop\IN5960\ml\results'
+# dataset_type = "val"
+# report_path = "qa_model_report.md"

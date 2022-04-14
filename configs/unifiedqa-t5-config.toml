@@ -1,0 +1,39 @@
+[datapaths]
+train_path = "../data/train_set.tsv"
+val_path = "../data/val_set.tsv"
+test_path = "../data/test_set.tsv"
+
+[models]
+
+[preprocessor]
+sep_token = '\n'
+cased = false
+# 0: pattern, 1: repl
+regex_sub_args = ["'(.*)'", '\1']
+
+[train]
+tokenizer_path = "allenai/unifiedqa-t5-base"
+model_path = "allenai/unifiedqa-t5-base"
+metrics = ["rouge"]
+
+
+[train.training_args]
+# TODO: use arguments recommended for fine-tuning
+output_dir = "./results/unifiedqa-t5-base"
+num_train_epochs = 2
+per_device_eval_batch_size = 32
+per_device_train_batch_size = 4
+warmup_steps = 500
+learning_rate = 5e-5
+weight_decay = 0.01
+logging_dir = "./logs/unifiedqa-t5-base-logs"
+logging_steps = 50
+save_steps = 1000
+# evaluation_strategy = "epoch"
+eval_steps = 100
+
+[evaluate]
+model = "qa"
+model_path = 'C:\Users\Markus\Desktop\IN5960\ml\results'
+dataset_type = "val"
+report_path = "qa_model_report.md"
