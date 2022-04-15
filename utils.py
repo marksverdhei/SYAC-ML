@@ -50,27 +50,47 @@ class DocumentPreprocessor:
 
 class SampleGenerationCallback(TrainerCallback):
     EXAMPLE_IDS = [
-        
+        # T: Apple exec says people who want this controversial feature should stop using iPhones
+        # A: Sideloading apps
+        "o72exh",
+        # T: The 76ers' Newest Concessions Item Is Causing a Cultural Controversy on Social Media
+        # A: Meat Pies being eaten with fork and knife instead of with hands
+        "7en3iy",
+        # T: The worst horror film of all time according to Stephen King
+        # A: Blood Feast
+        "q5vodo",
+        # T: An 80-year-old mother didn't share her Wordle score. It may have saved her life.
+        # A: A woman was taken hostage in her home in the morning, daughters became concerned when she didn't text them her daily Wordle score. Called police, guy was arrested, woman is ok
+        "sq60po",
+        # T: Mega Millions is up to $970 million—there’s one way to up the odds of winning, according to a Harvard statistics professor
+        # A: Buy more tickets with different numbers. Literally the only way to improve odds in a game of pure chance.
+        "l2rn92",
     ]
 
     "This callback produces title answers on a few examples"
-    def __init__(self, dev_set_df, tokenizer, preprocess_fn) -> None:
+    def __init__(self, eval_set_path, tokenizer, preprocess_fn) -> None:
         super().__init__()
-        raise NotImplementedError()
-
-        self.example_subset = dev_set_df.loc[self.EXAMPLE_IDS]
-        self.inputs = [
-            tokenizer(preprocess_fn(row.title, row.body), return_tensors="pt", truncation=True)
+        self.tokenizer = tokenizer
+        self.example_subset = pd.read_csv(eval_set_path, index_col=0).loc[self.EXAMPLE_IDS]
+        self.inputs = {
+            post_id: tokenizer(preprocess_fn(row.title, row.body), return_tensors="pt", truncation=True)
             for post_id, row in self.example_subset.iterrows()
-        ]
+        }
 
-    def on_evaluate(self, model: PreTrainedModel, tokenizer: PreTrainedTokenizer, **_):
-        for inputs in self.input_target_pairs:
-            output, = model.generate(**inputs)
-            prediction = tokenizer.decode(output)
-            print("="*20, "title", "="*20)
-            print("="*20, "target answer", "="*20)
-            print("="*20, "generated answer", "="*20)
+    def on_evaluate(self, *_, **kwargs):
+        model = kwargs["model"]
+        for post_id, inputs in self.inputs.items():
+            row = self.example_subset.loc[post_id]
+            output, = model.generate(**inputs.to(model.device))
+            prediction = self.tokenizer.decode(output.to("cpu"))
+
+            print("=" * 20, "title", "=" * 20)
+            print(row.title)
+            print("=" * 20, "generated answer", "=" * 20)
+            print(prediction)
+            print("=" * 20, "target answer", "=" * 20)
+            print(row.target)
+            print("\n")
 
 
 class ParaphraseProbabilityScorer:

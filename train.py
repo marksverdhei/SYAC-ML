@@ -97,15 +97,17 @@ def train_model(
         data_collator=collate_data,
         callbacks=[
             EarlyStoppingCallback(early_stopping_patience=4),
-            # SampleGenerationCallback(
-
-            # ),
+            SampleGenerationCallback(
+                val_set_path,
+                tokenizer,
+                preprocessor
+            ),
         ],
     )
 
     # eval_pre_train = trainer.evaluate()
     # print(eval_pre_train)
-    train_output = trainer.train()
+    train_output = trainer.train(resume_from_checkpoint=True)
     trainer.save_model()
     print(train_output)
 
