@@ -1,4 +1,4 @@
-from gc import callbacks
+import os
 import pandas as pd
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Dataset
@@ -105,9 +105,13 @@ def train_model(
         ],
     )
 
-    # eval_pre_train = trainer.evaluate()
-    # print(eval_pre_train)
-    train_output = trainer.train(resume_from_checkpoint=True)
+    out_dir = training_args.output_dir
+    if os.path.exists(out_dir) and len(os.listdir(out_dir)) > 0:
+        resume_from_checkpoint = True
+    else:
+        resume_from_checkpoint = False
+
+    train_output = trainer.train(resume_from_checkpoint=resume_from_checkpoint)
     trainer.save_model()
     print(train_output)
 
