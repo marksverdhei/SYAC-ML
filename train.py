@@ -1,9 +1,5 @@
-from utils import (
-    DocumentPreprocessor,
-    read_config,
-    read_tsv,
-    get_model_parameters,
-)
+from gc import callbacks
+import pandas as pd
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Dataset
 from transformers import (
@@ -11,12 +7,21 @@ from transformers import (
     AutoTokenizer,
     set_seed,
     Seq2SeqTrainer,
-    Seq2SeqTrainingArguments
+    Seq2SeqTrainingArguments,
+    EarlyStoppingCallback,
 )
+
+from utils import (
+    DocumentPreprocessor,
+    SampleGenerationCallback,
+    read_config,
+    get_model_parameters,
+)
+
 
 class SYACDataset(Dataset):
     def __init__(self, dataset_path, tokenizer, preprocessor) -> None:
-        df = read_tsv(dataset_path)
+        df = pd.read_csv(dataset_path)
         
         self.tokenizer = tokenizer
         self.length = len(df)
@@ -79,7 +84,7 @@ def train_model(
 
 
     print("=" * 20, "\n")
-    print("Model parameters:", get_model_parameters(model))
+    print("Model parameters:", get_model_parameters(model) // 1e6, "million")
     print("\n" + "=" * 20 + "\n")
 
     training_args = Seq2SeqTrainingArguments(**training_args)
@@ -90,6 +95,12 @@ def train_model(
         train_dataset=train_data,
         eval_dataset=val_data,
         data_collator=collate_data,
+        callbacks=[
+            EarlyStoppingCallback(early_stopping_patience=4),
+            SampleGenerationCallback(
+                
+            ),
+        ],
     )
 
     # eval_pre_train = trainer.evaluate()
@@ -106,9 +117,9 @@ def train_model(
 def main():
     # TODO
     set_seed(42)
-    conf = read_config(["train", "datapaths", "preprocessor"])
+    conf = read_config(["train", "dataset", "preprocessor"])
     train_conf = conf["train"]
-    datapaths = conf["datapaths"]
+    datapaths = conf["dataset"]
 
     train_model(
         train_set_path=datapaths["train_path"],
