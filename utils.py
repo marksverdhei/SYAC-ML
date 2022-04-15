@@ -5,8 +5,14 @@ from typing import Any, Dict, List, Union
 import pandas as pd
 import toml
 import torch
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-
+from torch.utils.data.dataloader import DataLoader
+from transformers import (
+    AutoTokenizer,
+    AutoModelForSequenceClassification,
+    PreTrainedModel,
+    PreTrainedTokenizer,
+    TrainerCallback,
+)
 
 CONFIG_PATH = "config.toml"
 
@@ -40,6 +46,31 @@ class DocumentPreprocessor:
             input_str = re.sub(regex_pattern, regex_repl, input_str)
 
         return input_str
+
+
+class SampleGenerationCallback(TrainerCallback):
+    EXAMPLE_IDS = [
+        
+    ]
+
+    "This callback produces title answers on a few examples"
+    def __init__(self, dev_set_df, tokenizer, preprocess_fn) -> None:
+        super().__init__()
+        raise NotImplementedError()
+
+        self.example_subset = dev_set_df.loc[self.EXAMPLE_IDS]
+        self.inputs = [
+            tokenizer(preprocess_fn(row.title, row.body), return_tensors="pt", truncation=True)
+            for post_id, row in self.example_subset.iterrows()
+        ]
+
+    def on_evaluate(self, model: PreTrainedModel, tokenizer: PreTrainedTokenizer, **_):
+        for inputs in self.input_target_pairs:
+            output, = model.generate(**inputs)
+            prediction = tokenizer.decode(output)
+            print("="*20, "title", "="*20)
+            print("="*20, "target answer", "="*20)
+            print("="*20, "generated answer", "="*20)
 
 
 class ParaphraseProbabilityScorer:
