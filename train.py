@@ -97,9 +97,9 @@ def train_model(
         data_collator=collate_data,
         callbacks=[
             EarlyStoppingCallback(early_stopping_patience=4),
-            SampleGenerationCallback(
-                
-            ),
+            # SampleGenerationCallback(
+
+            # ),
         ],
     )
 
