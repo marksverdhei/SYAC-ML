@@ -1,8 +1,9 @@
 import re
 from abc import ABC, abstractmethod
 
-from transformers import AutoModel, AutoTokenizer, T5ForConditionalGeneration
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, T5ForConditionalGeneration
 import torch
+from utils import DocumentPreprocessor, get_best_checkpoint
 """
 The main motivation of this module is to provide abstraction of the models
 to make the classificiation (and prehaps even the training scripts) code model agnostic.
@@ -10,14 +11,7 @@ For this, it is important that the all the objects implement the same interface
 """
 
 
-class TitleAnsweringPipeline:
-    @staticmethod
-    def from_config(config):
-        # TODO: implement
-        raise NotImplementedError("Implement this")
-
-
-class TitleAnsweringPipelineBase(ABC):
+class TitleAnsweringPipeline(ABC):
     """
     This class outlines a functional interface for a 
     title answerer it should implement the call method which
@@ -25,11 +19,44 @@ class TitleAnsweringPipelineBase(ABC):
     """
 
     @abstractmethod
-    def __call__(self, title, body) -> str:
+    def __call__(self, title: str, body: str) -> str:
         pass
 
 
-class TAExtractiveQAPipeline(TitleAnsweringPipelineBase):
+    @staticmethod
+    def from_config(config):
+        output_dir = config["train"]["training_args"]["output_dir"]
+        tokenizer_path = config["train"]["tokenizer_path"]
+        best_checkpoint = get_best_checkpoint(output_dir)
+
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+        model = AutoModelForSeq2SeqLM.from_pretrained(best_checkpoint)
+
+        return AbstractiveTAPipeline(
+            preprocessor=DocumentPreprocessor(config["preprocessor"]),
+            tokenizer=tokenizer,
+            model=model,
+        )
+
+
+class AbstractiveTAPipeline(TitleAnsweringPipeline):    
+    def __init__(self, preprocessor, tokenizer, model, max_length=None) -> None:
+        self.preprocessor = preprocessor
+        self.tokenizer = tokenizer
+        self.model = model
+        self.truncation = max_length == True
+        self.max_length = max_length if self.truncation == False else None
+
+    @torch.no_grad()
+    def __call__(self, title, body) -> str:
+        input_str = self.preprocessor(title, body)
+        inputs = self.tokenizer(input_str, return_tensors="pt").to(self.model.device)
+        generated_tokens, = self.model.generate(**inputs).to("cpu")
+        output = self.tokenizer.decode(generated_tokens, skip_special_tokens=True)
+        return output
+
+
+class TAExtractiveQAPipeline(TitleAnsweringPipeline):
     """
     Model for title answering based on a QA model huggingface pipeline
     """
@@ -42,26 +69,3 @@ class TAExtractiveQAPipeline(TitleAnsweringPipelineBase):
 
     def model_output(self, title, body):
         return self._internal_pipeline({"question": title, "context": body})
-
-
-class TitleAnsweringUnifiedQAPipeline(TitleAnsweringPipelineBase):
-    """
-    Model for title answering based on a QA model huggingface pipeline
-    """
-
-    def __init__(self, model_path, tokenizer_path):
-        self.model = T5ForConditionalGeneration.from_pretrained(model_path).to("cuda")
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
-
-    @torch.no_grad()
-    def __call__(self, title, body) -> str:
-        input_str = self.preprocess(title, body)
-        tokens = self.tokenizer.encode(input_str, return_tensors="pt", truncation=True, max_length=1024).to("cuda")
-        model_output = self.model.generate(tokens).to("cpu")
-        resp, = self.tokenizer.batch_decode(model_output, skip_special_tokens=True)
-        return resp
-
-    def preprocess(self, title, body) -> str:
-        combined_str = title.lower() + r" \n " + body.lower()
-        input_str = re.sub("'(.*)'", r"\1", combined_str)
-        return input_str
