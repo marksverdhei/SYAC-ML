@@ -1,3 +1,5 @@
+import os
+import json
 import argparse
 import re
 from typing import Any, Dict, List, Union
@@ -13,6 +15,8 @@ from transformers import (
     PreTrainedTokenizer,
     TrainerCallback,
 )
+from transformers.trainer_utils import get_last_checkpoint
+
 
 CONFIG_PATH = "config.toml"
 
@@ -124,6 +128,14 @@ def get_config_path_arg():
     args = parser.parse_args()
     return args.config
 
+
+def get_best_checkpoint(checkpoints_dir: str) -> str:
+    "Reads the trainer state to find the best checkpoint"
+    last_checkpoint_dir = get_last_checkpoint(checkpoints_dir)
+    trainer_state_path = os.path.join(last_checkpoint_dir, "trainer_state.json")
+    with open(trainer_state_path, "rb") as f:
+        best_path = json.load(f)["best_model_checkpoint"]
+    return best_path
 
 def read_tsv(path):
     return pd.read_csv(path, index_col=0, sep="\t")
