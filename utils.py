@@ -142,7 +142,7 @@ def read_tsv(path):
 
 
 def read_config(
-    fields: Union[str, List[str]],
+    fields: Union[str, List[str]] = None,
 ) -> Dict[str, str]:
     """
     This function reads a specified config path from the command line
@@ -151,7 +151,9 @@ def read_config(
     config_path = get_config_path_arg()
     conf = toml.load(config_path)
 
-    if isinstance(fields, list):
+    if fields is None:
+        return conf
+    elif isinstance(fields, list):
         subconf = {k: conf[k] for k in fields}
         return subconf
     else:

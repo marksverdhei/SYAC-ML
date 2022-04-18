@@ -1,109 +1,63 @@
+import datasets
 import pandas as pd
 from utils import read_config
 from datasets import load_metric
-from tqdm import tqdm
-from baselines import BASELINES
-
-EVALUATION_REPORT_TEMPLATE = """
-# Evaluation of {model_name}
-
-{scores}
-
-"""
-
-ROUGE_TYPES = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
-MEASURES = ["precision", "recall", "fmeasure"]
-
-rouge = load_metric("rouge")
-
-def compute_rouge(y_true, y_pred):
-    output = rouge.compute(
-        predictions=[y_pred], 
-        references=[y_true])
-    
-    return {
-        rouge_type: output[rouge_type].mid.fmeasure 
-        for rouge_type in ROUGE_TYPES
-    }
 
 
-def evaluate_on_dataset(eval_set, model, metrics, progress=True):
-    scores = []
+def evaluate_from_config(config):
+    model_name = config["model"]["name"]
+    dev_set_path = config["dataset"]["val_path"]
+    test_set_path = config["dataset"]["test_path"]
 
-    row_iter = eval_set.iterrows()
-    if progress:
-        row_iter = tqdm(row_iter, total=len(eval_set))
+    dev_set = pd.read_csv(dev_set_path, index_col=0)
+    test_set = pd.read_csv(test_set_path, index_col=0)
 
-    for _, row in row_iter:
-        answer = model(
-            title=row.title,
-            body=row.body, 
+    dev_predictions = pd.read_csv(f"evaluation/dev/{model_name}/predictions.csv", index_col=0)
+    test_predictions = pd.read_csv(f"evaluation/test/{model_name}/predictions.csv", index_col=0)
+
+    dev_set["prediction"] = dev_predictions
+    test_set["prediction"] = test_predictions
+
+    rouge = load_metric("rouge")
+    bleu = load_metric("sacrebleu")
+    meteor = load_metric("meteor")
+
+    for split_name, df in [("dev", dev_set), ("test", test_set)]:
+        scores = {}
+
+        predictions = df["prediction"].array
+        # Change shape to (500, 1)
+        references = df["target"].array
+
+        rouge_scores = rouge.compute(
+            predictions=predictions,
+            references=references,
         )
-        answer = answer.lower()
-        target = row.target.lower()
 
-        scores.append({name: f(answer, target) for name, f in metrics.items()})
+        scores.update({k: v.mid.fmeasure for k, v in rouge_scores.items()})
 
-    return scores
+        bleu_score = bleu.compute(
+            predictions=predictions,
+            references=references[:, None],
+        )
 
-def run_evaluation(
-    eval_set,
-    pipelines,
-):
-    metric_functions = {
-        "rouge1_f1": compute_rouge,
-    }
+        scores["bleu"] = bleu_score["score"]
 
-    results_per_model = {
-        pipeline_name: evaluate_on_dataset(eval_set, pipeline, metric_functions)
-        for pipeline_name, pipeline in pipelines.items()
-    }
+        meteor_score = meteor.compute(
+            predictions=predictions,
+            references=references,
+        )
 
-    return results_per_model  
+        scores.update(meteor_score)
 
-def write_metric_report(report_filename, tables) -> None:
-    md_tables = {k: v.to_markdown() for k, v in tables.items()}
-
-    with open(report_filename, "w+") as f:
-        f.write(EVALUATION_REPORT_TEMPLATE.format(**md_tables))
+        scores_df = pd.DataFrame(scores, index=["example-model"])
+        scores_df.index.name = "Model"
+        scores_df.to_csv(f"evaluation/{split_name}/{model_name}/scores.csv")
 
 
 def main() -> None:
-    config = read_config(["evaluate", "datapaths"])
-    dataset_type = config["evaluate"]["dataset_type"]
-    eval_set_path = config["datapaths"][f"{dataset_type}_path"]
-    model_type = config["evaluate"]["model"]
-    model_path = config["evaluate"]["model_path"]
-    report_path = config["evaluate"]["report_path"]
-
-    eval_sets = [
-        # pd.read_csv(eval_set_path, index_col=0, sep="\t")
-        pd.read_csv("../data/test_set.tsv", index_col=0, sep="\t")
-    ]
-    
-    # model = TitleAnsweringUnifiedQAPipeline(model_path=model_path, tokenizer_path="allenai/unifiedqa-t5-base")
-    report = ""
-    # TODO: swap out baselines
-    for eval_set in eval_sets:
-        scores = run_evaluation(
-            eval_set=eval_set,
-            pipelines=BASELINES,
-        )
-
-        for model_name in BASELINES:
-            baseline_scores = [i["rouge1_f1"] for i in scores[model_name]]
-
-            # FIXME
-            scores_df = pd.DataFrame(baseline_scores).mean(axis=0)
-            scores_md = scores_df.to_markdown()
-
-            report += EVALUATION_REPORT_TEMPLATE.format(
-                model_name=model_name,
-                scores=scores_md,
-            )
-
-    with open("baseline_scores_test_set.md", "w+") as f:
-        f.write(report)
+    config = read_config()
+    evaluate_from_config(config)
 
 
 if __name__ == "__main__":

@@ -44,13 +44,12 @@ class AbstractiveTAPipeline(TitleAnsweringPipeline):
         self.preprocessor = preprocessor
         self.tokenizer = tokenizer
         self.model = model
-        self.truncation = max_length == True
-        self.max_length = max_length if self.truncation == False else None
+        self.tokenizer.model_max_length = max_length
 
     @torch.no_grad()
     def __call__(self, title, body) -> str:
         input_str = self.preprocessor(title, body)
-        inputs = self.tokenizer(input_str, return_tensors="pt").to(self.model.device)
+        inputs = self.tokenizer(input_str, return_tensors="pt", truncation=True).to(self.model.device)
         generated_tokens, = self.model.generate(**inputs).to("cpu")
         output = self.tokenizer.decode(generated_tokens, skip_special_tokens=True)
         return output
