@@ -28,7 +28,7 @@ def generate_readme():
     dev_lb = postprocess_leaderboard(dev_lb)
     test_lb = postprocess_leaderboard(test_lb)
     
-    with open("README.MD", "w+") as f:
+    with open("README.md", "w+") as f:
         f.write(TEMPL_STR.format(
             test_lb=test_lb.to_markdown(), 
             dev_lb=dev_lb.to_markdown(),
