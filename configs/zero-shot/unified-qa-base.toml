@@ -1,0 +1,15 @@
+[dataset]
+train_path = "reddit-syac/train.csv"
+val_path = "reddit-syac/dev.csv"
+test_path = "reddit-syac/test.csv"
+
+[model]
+name = "unifiedqa-t5-base-zero-shot"
+tokenizer_path = "allenai/unifiedqa-t5-base"
+model_path = "allenai/unifiedqa-t5-base"
+
+[preprocessor]
+sep_token = '\n'
+cased = false
+# 0: pattern, 1: repl
+regex_sub_args = ["'(.*)'", '\1']
