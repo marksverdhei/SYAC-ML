@@ -5,7 +5,7 @@ test_path = "reddit-syac/test.csv"
 
 [model]
 # Model name determines checkpoint and directory and 
-name = "bart-large-cnn-adam"
+name = "bart-large-cnn"
 tokenizer_path = "facebook/bart-large-cnn"
 model_path = "facebook/bart-large-cnn"
 # Checkpoints:
@@ -41,6 +41,7 @@ evaluation_strategy = "steps"
 save_steps = 512
 eval_steps = 512
 # weight_decay = 0.01
+optim = "adafactor"
 load_best_model_at_end = true
 save_total_limit = 2
 
