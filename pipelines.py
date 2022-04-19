@@ -25,8 +25,9 @@ class TitleAnsweringPipeline(ABC):
 
     @staticmethod
     def from_config(config):
-        output_dir = config["train"]["training_args"]["output_dir"]
-        tokenizer_path = config["train"]["tokenizer_path"]
+        model_name = config["model"]["name"]
+        output_dir = f"./checkpoints/{model_name}/"
+        tokenizer_path = config["model"]["tokenizer_path"]
         best_checkpoint = get_best_checkpoint(output_dir)
 
         tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
