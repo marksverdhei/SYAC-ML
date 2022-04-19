@@ -26,18 +26,28 @@ class TitleAnsweringPipeline(ABC):
     @staticmethod
     def from_config(config):
         model_name = config["model"]["name"]
-        output_dir = f"./checkpoints/{model_name}/"
         tokenizer_path = config["model"]["tokenizer_path"]
-        best_checkpoint = get_best_checkpoint(output_dir)
+        
+        output_dir = f"./checkpoints/{model_name}/"
+        if os.path.isdir(output_dir):
+            best_checkpoint = get_best_checkpoint(output_dir)
+        else:
+            best_checkpoint = config["model"]["model_path"]
 
-        tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
-        model = AutoModelForSeq2SeqLM.from_pretrained(best_checkpoint)
+        if not config["model"].get("extractive"):
+            tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+            model = AutoModelForSeq2SeqLM.from_pretrained(best_checkpoint)
 
-        return AbstractiveTAPipeline(
-            preprocessor=DocumentPreprocessor(config["preprocessor"]),
-            tokenizer=tokenizer,
-            model=model,
-        )
+            return AbstractiveTAPipeline(
+                preprocessor=DocumentPreprocessor(config["preprocessor"]),
+                tokenizer=tokenizer,
+                model=model,
+            )
+        else:
+            return ExtractiveQAPipeline(
+                model_path=best_checkpoint,
+                tokenizer_path=tokenizer_path,
+            )
 
 
 class AbstractiveTAPipeline(TitleAnsweringPipeline):    
@@ -56,16 +66,19 @@ class AbstractiveTAPipeline(TitleAnsweringPipeline):
         return output
 
 
-class TAExtractiveQAPipeline(TitleAnsweringPipeline):
+class ExtractiveQAPipeline(TitleAnsweringPipeline):
     """
     Model for title answering based on a QA model huggingface pipeline
     """
 
-    def __init__(self, hf_pipeline):
-        self._internal_pipeline = hf_pipeline
+    def __init__(self, model_path, tokenizer_path):
+        self.pipeline = pipeline(
+            "question-answering", 
+            model=model_path, 
+            tokenizer=tokenizer_path
+        )
 
     def __call__(self, title, body) -> str:
-        return self.model_output(title, body)["answer"]
+        result = self.pipeline({"question": title, "context": body})
+        return result["answer"]
 
-    def model_output(self, title, body):
-        return self._internal_pipeline({"question": title, "context": body})
