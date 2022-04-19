@@ -74,6 +74,8 @@ def train_model(
     tokenizer_path = model_conf["tokenizer_path"]
     model_path = model_conf["model_path"]
 
+    use_early_stopping = train_conf.get("early_stopping") is not None
+
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
     preprocessor = DocumentPreprocessor(preprocessor_conf)
@@ -90,6 +92,7 @@ def train_model(
     training_args = Seq2SeqTrainingArguments(
         output_dir=f"./checkpoints/{model_name}",
         logging_dir=f"./train_logs/{model_name}",
+        load_best_model_at_end=use_early_stopping,
         **train_conf["training_args"],
     )
 
@@ -101,7 +104,7 @@ def train_model(
         ),
     ]
 
-    if train_conf.get("early_stopping") is not None:
+    if use_early_stopping:
         callbacks.append(
             EarlyStoppingCallback(**train_conf["early_stopping"]),
         )
