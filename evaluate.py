@@ -1,8 +1,11 @@
-import datasets
 import pandas as pd
 from utils import read_config
 from datasets import load_metric
+from baselines import BASELINES
+from tqdm import tqdm
+from predict import predict_on_datasets
 
+tqdm.pandas()
 
 def evaluate_from_config(config):
     model_name = config["model"]["name"]
@@ -18,15 +21,20 @@ def evaluate_from_config(config):
     dev_set["prediction"] = dev_predictions
     test_set["prediction"] = test_predictions
 
+    dev_scores, test_scores = compute_metrics(dev_set, test_set, model_name)
+    dev_scores.to_csv(f"evaluation/dev/{model_name}/scores.csv")
+    test_scores.to_csv(f"evaluation/test/{model_name}/scores.csv")
+
+
+def compute_metrics(dev_set, test_set, model_name):
     rouge = load_metric("rouge")
     bleu = load_metric("sacrebleu")
     meteor = load_metric("meteor")
+    scores_dfs = []
 
-    for split_name, df in [("dev", dev_set), ("test", test_set)]:
+    for df in (dev_set, test_set):
         scores = {}
-
         predictions = df["prediction"].array
-        # Change shape to (500, 1)
         references = df["target"].array
 
         rouge_scores = rouge.compute(
@@ -50,14 +58,43 @@ def evaluate_from_config(config):
 
         scores.update(meteor_score)
 
-        scores_df = pd.DataFrame(scores, index=["example-model"])
+        scores_df = pd.DataFrame(scores, index=[model_name])
         scores_df.index.name = "Model"
-        scores_df.to_csv(f"evaluation/{split_name}/{model_name}/scores.csv")
+        scores_dfs.append(scores_df)
+
+    return scores_dfs
+
+
+def evaluate_baselines():
+    dev_set_path = "reddit-syac/dev.csv"
+    test_set_path = "reddit-syac/test.csv"
+    
+    result_dev_df = pd.DataFrame()
+    result_test_df = pd.DataFrame()
+    
+    for name, pipeline in BASELINES.items():
+        dev_set = pd.read_csv(dev_set_path, index_col=0)
+        test_set = pd.read_csv(test_set_path, index_col=0)
+        dev_pred, test_pred = predict_on_datasets(dev_set_path, test_set_path, pipeline)
+        dev_set["prediction"] = dev_pred
+        test_set["prediction"] = test_pred
+        dev_metrics, test_metrics = compute_metrics(dev_set, test_set, name)
+        result_dev_df = pd.concat((result_dev_df, dev_metrics))
+        result_test_df = pd.concat((result_test_df, test_metrics))
+
+    result_dev_df.to_csv("evaluation/dev_leaderboard.csv")
+    result_test_df.to_csv("evaluation/test_leaderboard.csv")
+
 
 
 def main() -> None:
-    config = read_config()
-    evaluate_from_config(config)
+    eval_baselines = True
+
+    if eval_baselines:
+        evaluate_baselines()
+    else:
+        config = read_config()
+        evaluate_from_config(config)
 
 
 if __name__ == "__main__":
