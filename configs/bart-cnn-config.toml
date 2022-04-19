@@ -5,42 +5,29 @@ test_path = "reddit-syac/test.csv"
 
 [model]
 # Model name determines checkpoint and directory and 
-name = "bart-large-cnn-adam"
+name = "bart-large-cnn"
 tokenizer_path = "facebook/bart-large-cnn"
 model_path = "facebook/bart-large-cnn"
-# Checkpoints:
-# checkpoints_dir = "./checkpoints/unifiedqa-t5-base"
+max_input_length = 1024
 
 [preprocessor]
-sep_token = '<\s><s>'
+sep_token = '|'
 cased = true
-
-# [train.training_args]
-# num_train_epochs = 1
-# per_device_train_batch_size = 1
-# per_device_eval_batch_size = 16
-# warmup_steps = 500
-# learning_rate = 3e-5
-# weight_decay = 0.01
-# logging_steps = 50
-# save_steps = 0
-# evaluation_strategy = "epoch"
 
 [train]
 
 [train.training_args]
-# TODO: use arguments recommended for fine-tuning
 num_train_epochs = 20
 per_device_eval_batch_size = 8
-per_device_train_batch_size = 2
+per_device_train_batch_size = 8
 warmup_steps = 500
 learning_rate = 1e-5
 logging_steps = 50
 save_strategy = "steps"
 evaluation_strategy = "steps"
-save_steps = 512
-eval_steps = 512
-# weight_decay = 0.01
+save_steps = 256
+eval_steps = 256
+weight_decay = 0.01
 load_best_model_at_end = true
 save_total_limit = 2
 
