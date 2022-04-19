@@ -5,7 +5,6 @@ from torch.utils.data import Dataset
 from transformers import (
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
-    set_seed,
     Seq2SeqTrainer,
     Seq2SeqTrainingArguments,
     EarlyStoppingCallback,
@@ -131,8 +130,6 @@ def train_model(
         
 
 def main():
-    # TODO
-    set_seed(42)
     conf = read_config()
 
     train_model(
