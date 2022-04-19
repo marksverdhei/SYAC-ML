@@ -62,18 +62,17 @@ def collate_data(data):
 def train_model(
     train_set_path, 
     val_set_path, 
-    training_args,
+    model_conf,
     preprocessor_conf,
-    model_path,
-    tokenizer_path=None,
-    **kwargs,
+    train_conf,
 ) -> None:
     """
     Trains and checkpoints the model with intermediate evaluations
     Parameters are read from utils.toml
     """
-    if tokenizer_path is None:
-        tokenizer_path = model_path
+    model_name = model_conf["name"]
+    tokenizer_path = model_conf["tokenizer_path"]
+    model_path = model_conf["model_path"]
 
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
@@ -84,10 +83,28 @@ def train_model(
 
 
     print("=" * 20, "\n")
+    print("Training", model_name)
     print("Model parameters:", get_model_parameters(model) // 1e6, "million")
     print("\n" + "=" * 20 + "\n")
 
-    training_args = Seq2SeqTrainingArguments(**training_args)
+    training_args = Seq2SeqTrainingArguments(
+        output_dir=f"./checkpoints/{model_name}",
+        logging_dir=f"./train_logs/{model_name}",
+        **train_conf["training_args"],
+    )
+
+    callbacks = [
+        SampleGenerationCallback(
+            val_set_path,
+            tokenizer,
+            preprocessor
+        ),
+    ]
+
+    if train_conf.get("early_stopping") is not None:
+        callbacks.append(
+            EarlyStoppingCallback(**train_conf["early_stopping"]),
+        )
 
     trainer = Seq2SeqTrainer(
         model=model,
@@ -95,14 +112,7 @@ def train_model(
         train_dataset=train_data,
         eval_dataset=val_data,
         data_collator=collate_data,
-        callbacks=[
-            EarlyStoppingCallback(early_stopping_patience=4),
-            SampleGenerationCallback(
-                val_set_path,
-                tokenizer,
-                preprocessor
-            ),
-        ],
+        callbacks=callbacks,
     )
 
     out_dir = training_args.output_dir
@@ -123,17 +133,14 @@ def train_model(
 def main():
     # TODO
     set_seed(42)
-    conf = read_config(["train", "dataset", "preprocessor"])
-    train_conf = conf["train"]
-    datapaths = conf["dataset"]
+    conf = read_config()
 
     train_model(
-        train_set_path=datapaths["train_path"],
-        val_set_path=datapaths["val_path"],
-        # training_args=train_conf["training_args"],
-        # model_path=train_conf["model_path"],
+        train_set_path=conf["dataset"]["train_path"],
+        val_set_path=conf["dataset"]["val_path"],
+        train_conf=conf["train"],
+        model_conf=conf["model"],
         preprocessor_conf=conf["preprocessor"],
-        **train_conf,
     )
 
 
