@@ -44,37 +44,46 @@ def create_leaderboard_df(split, aggregate_baselines=False):
     leaderboard = pd.read_csv(f"{split}_leaderboard.csv", index_col=0)
     if aggregate_baselines:
         leaderboard = leaderboard.max().to_frame("Best baseline").T
+
+    leaderboard = assemble_subdirs(leaderboard, split)
     
     return leaderboard
 
 
-def generate_table(*, format="md", aggregate_baselines=False, test_set=False):
+def generate_table(*, format="md", aggregate_baselines=False, test=False):
     dev_lb = create_leaderboard_df("dev", aggregate_baselines=aggregate_baselines)
     dev_lb = postprocess_leaderboard(dev_lb, format=format)
 
 
-    if test_set:
-        test_lb = create_leaderboard_df("dev", aggregate_baselines=aggregate_baselines)
-        dev_lb = postprocess_leaderboard(dev_lb, format=format)
+    if test:
+        test_lb = create_leaderboard_df("test", aggregate_baselines=aggregate_baselines)
+        test_lb = postprocess_leaderboard(test_lb, format=format)
 
     if format == "md":
         with open("README.md", "w+") as f:
-            f.write(TEMPL_STR.format(
-                dev_lb=dev_lb.to_markdown(),
-            ))
+            if test:
+                f.write(TEMPL_STR_ALL.format(
+                    dev_lb=dev_lb.to_markdown(),
+                    test_lb=test_lb.to_markdown(),
+                ))
+            else:        
+                f.write(TEMPL_STR.format(
+                    dev_lb=dev_lb.to_markdown(),
+                ))
     else:
         dev_lb.to_latex("dev_leaderboard.tex", escape=False)
-        test_lb.to_latex("test_leaderboard.tex", escape=False)
+        if test:
+            test_lb.to_latex("test_leaderboard.tex", escape=False)
 
 
 def main():
     ap = ArgumentParser()
-    ap.add_argument("--test", aciton="store_true")
-    ap.add_argument("--latex", aciton="store_true")
-    args = ap.parse_args
+    ap.add_argument("--test", type=bool)
+    ap.add_argument("--latex", type=bool)
+    args = ap.parse_args()
 
     format = "latex" if args.latex else "md"
-    generate_table(fomrat=format, test=args.test)
+    generate_table(format=format, test=args.test)
 
 
 if __name__ == "__main__":
