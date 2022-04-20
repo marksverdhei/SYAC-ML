@@ -4,6 +4,6 @@ val_path = "reddit-syac/dev.csv"
 test_path = "reddit-syac/test.csv"
 
 [model]
-name = "bart-large-cnn-zero-shot"
-tokenizer_path = "facebook/bart-large-cnn"
-model_path = "facebook/bart-large-cnn"
+name = "pegasus-gigaword-zero-shot"
+tokenizer_path = "google/pegasus-gigaword"
+model_path = "google/pegasus-gigaword"
