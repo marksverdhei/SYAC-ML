@@ -1,0 +1,10 @@
+[dataset]
+train_path = "reddit-syac/train.csv"
+val_path = "reddit-syac/dev.csv"
+test_path = "reddit-syac/test.csv"
+
+[model]
+extractive_qa = true
+name = "roberta-base-squad2-zero-shot"
+tokenizer_path = "deepset/roberta-base-squad2"
+model_path = "deepset/roberta-base-squad2"

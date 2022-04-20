@@ -8,7 +8,7 @@ test_path = "reddit-syac/test.csv"
 name = "bart-large-cnn"
 tokenizer_path = "facebook/bart-large-cnn"
 model_path = "facebook/bart-large-cnn"
-train_max_input_length = 1024
+max_input_length = 1024
 
 [preprocessor]
 sep_token = '|'

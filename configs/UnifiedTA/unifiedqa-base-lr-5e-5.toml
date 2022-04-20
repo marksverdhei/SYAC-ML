@@ -5,7 +5,7 @@ test_path = "reddit-syac/test.csv"
 
 [model]
 # Model name determines checkpoint and directory and 
-name = "unifiedqa-t5-base"
+name = "unifiedqa-t5-base-lr-5e-5"
 tokenizer_path = "allenai/unifiedqa-t5-base"
 model_path = "allenai/unifiedqa-t5-base"
 # Checkpoints:
@@ -25,7 +25,7 @@ num_train_epochs = 20
 per_device_eval_batch_size = 32
 per_device_train_batch_size = 8
 warmup_steps = 500
-learning_rate = 1e-4
+learning_rate = 5e-5
 logging_steps = 200
 save_strategy = "epoch"
 evaluation_strategy = "epoch"

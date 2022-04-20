@@ -1,37 +1,39 @@
-[datapaths]
-train_path = "../data/train_set.tsv"
-val_path = "../data/val_set.tsv"
-test_path = "../data/test_set.tsv"
+[dataset]
+train_path = "reddit-syac/train.csv"
+val_path = "reddit-syac/dev.csv"
+test_path = "reddit-syac/test.csv"
 
-[models]
+[model]
+# Model name determines checkpoint and directory and 
+name = "t5-headline-gen"
+tokenizer_path = "Michau/t5-base-en-generate-headline"
+model_path = "Michau/t5-base-en-generate-headline"
+max_input_length = 512
 
 [preprocessor]
-# First instance where it might be relevant for a custom pattern
 # Original model uses "Headline: " + article
 sep_token = '|'
 cased = false
 
 [train]
-tokenizer_path = "Michau/t5-base-en-generate-headline"
-model_path = "Michau/t5-base-en-generate-headline"
-metrics = ["rouge"]
-
 
 [train.training_args]
-# TODO: use arguments recommended for fine-tuning
-output_dir = "./results/t5-base-en-generate-headline"
-logging_dir = "./logs/t5-base-en-generate-headline"
-num_train_epochs = 1
+num_train_epochs = 20
+per_device_eval_batch_size = 32
 per_device_train_batch_size = 4
 warmup_steps = 500
-learning_rate = 5e-5
-weight_decay = 0.01
+learning_rate = 1e-3
 logging_steps = 50
-save_steps = 0
-evaluation_strategy = "epoch"
 
-[evaluate]
-model = "tg"
-model_path = 'C:/Users/Markus/Desktop/IN5960/ml/results'
-dataset_type = "val"
-report_path = "headline_model_report.md"
+save_strategy = "steps"
+save_steps = 256
+evaluation_strategy = "steps"
+eval_steps = 256
+# weight_decay = 0.01
+optim = "adafactor"
+load_best_model_at_end = true
+save_total_limit = 2
+
+[train.early_stopping]
+early_stopping_patience = 4
+# early_stopping_threshold = 0.001

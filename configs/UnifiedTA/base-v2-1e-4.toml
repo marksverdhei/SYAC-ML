@@ -5,9 +5,9 @@ test_path = "reddit-syac/test.csv"
 
 [model]
 # Model name determines checkpoint and directory and 
-name = "unifiedqa-t5-base"
-tokenizer_path = "allenai/unifiedqa-t5-base"
-model_path = "allenai/unifiedqa-t5-base"
+name = "uqa-v2-base-lr-1e-4"
+tokenizer_path = "allenai/unifiedqa-v2-t5-base-1363200"
+model_path = "allenai/unifiedqa-v2-t5-base-1363200"
 # Checkpoints:
 # checkpoints_dir = "./checkpoints/unifiedqa-t5-base"
 
