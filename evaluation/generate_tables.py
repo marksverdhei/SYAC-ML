@@ -20,8 +20,12 @@ TEMPL_STR_ALL = TEMPL_STR + """
 
 def assemble_subdirs(leaderboard, split):
     for dir in os.listdir(split):
-        scores = pd.read_csv(f"{split}/{dir}/scores.csv", index_col=0)
-        leaderboard = pd.concat((leaderboard, scores))
+        scores_path = f"{split}/{dir}/scores.csv"
+        if os.path.exists(scores_path):
+            scores = pd.read_csv(scores_path, index_col=0)
+            leaderboard = pd.concat((leaderboard, scores))
+        else:
+            print("WANRING: did not find", scores_path, ", skipping")
 
     return leaderboard
 
@@ -78,8 +82,8 @@ def generate_table(*, format="md", aggregate_baselines=False, test=False):
 
 def main():
     ap = ArgumentParser()
-    ap.add_argument("--test", type=bool)
-    ap.add_argument("--latex", type=bool)
+    ap.add_argument("--test", action='store_true')
+    ap.add_argument("--latex", action='store_true')
     args = ap.parse_args()
 
     format = "latex" if args.latex else "md"
