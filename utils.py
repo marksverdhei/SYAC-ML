@@ -28,7 +28,7 @@ class DocumentPreprocessor:
 
     def __init__(self, config: Dict[str, Any]) -> None:
         self.sep_token = config.get("sep_token", None)
-        self.sep_token_sub = config.get("sep_token_sub", "")
+        self.sep_token_sub = config.get("sep_token_sub", " ")
         self.regex_args = config.get("regex_sub_args", None)
         self.cased = config.get("cased", True) 
 
