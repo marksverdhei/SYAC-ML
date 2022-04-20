@@ -1,14 +1,9 @@
-import re
+import os
 from abc import ABC, abstractmethod
 
-from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, T5ForConditionalGeneration
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, pipeline
 import torch
 from utils import DocumentPreprocessor, get_best_checkpoint
-"""
-The main motivation of this module is to provide abstraction of the models
-to make the classificiation (and prehaps even the training scripts) code model agnostic.
-For this, it is important that the all the objects implement the same interface
-"""
 
 
 class TitleAnsweringPipeline(ABC):
@@ -27,6 +22,7 @@ class TitleAnsweringPipeline(ABC):
     def from_config(config):
         model_name = config["model"]["name"]
         tokenizer_path = config["model"]["tokenizer_path"]
+        preprocessor_conf = config.get("preprocessor", {})
         
         output_dir = f"./checkpoints/{model_name}/"
         if os.path.isdir(output_dir):
@@ -34,12 +30,13 @@ class TitleAnsweringPipeline(ABC):
         else:
             best_checkpoint = config["model"]["model_path"]
 
-        if not config["model"].get("extractive"):
+        if not config["model"].get("extractive_qa"):
             tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
             model = AutoModelForSeq2SeqLM.from_pretrained(best_checkpoint)
+            
 
             return AbstractiveTAPipeline(
-                preprocessor=DocumentPreprocessor(config["preprocessor"]),
+                preprocessor=DocumentPreprocessor(preprocessor_conf),
                 tokenizer=tokenizer,
                 model=model,
             )
@@ -50,7 +47,10 @@ class TitleAnsweringPipeline(ABC):
             )
 
 
-class AbstractiveTAPipeline(TitleAnsweringPipeline):    
+class AbstractiveTAPipeline(TitleAnsweringPipeline):
+    """
+    
+    """
     def __init__(self, preprocessor, tokenizer, model, max_length=None) -> None:
         self.preprocessor = preprocessor
         self.tokenizer = tokenizer
@@ -75,8 +75,9 @@ class ExtractiveQAPipeline(TitleAnsweringPipeline):
         self.pipeline = pipeline(
             "question-answering", 
             model=model_path, 
-            tokenizer=tokenizer_path
+            tokenizer=tokenizer_path,
         )
+        self.tokenizer = self.pipeline.tokenizer
 
     def __call__(self, title, body) -> str:
         result = self.pipeline({"question": title, "context": body})

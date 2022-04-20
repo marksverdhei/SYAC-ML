@@ -1,30 +1,30 @@
 import os
-
+from argparse import ArgumentParser
 import pandas as pd
 
 TEMPL_STR = """
 
 # Leaderboard  
 
-## Test set  
-
-{test_lb}
-
 ## Dev set
 
 {dev_lb}
-
 """
-def assemble_subdirs(dev_lb, test_lb):
-    for dir in os.listdir("dev"):
-        dev_scores = pd.read_csv(f"dev/{dir}/scores.csv", index_col=0)
-        dev_lb = pd.concat((dev_lb, dev_scores))
 
-    for dir in os.listdir("test"):
-        test_scores = pd.read_csv(f"test/{dir}/scores.csv", index_col=0)
-        test_lb = pd.concat((test_lb, test_scores))
+TEMPL_STR_ALL = TEMPL_STR + """
 
-    return dev_lb, test_lb
+## Test set  
+
+{test_lb}
+"""
+
+def assemble_subdirs(leaderboard, split):
+    for dir in os.listdir(split):
+        scores = pd.read_csv(f"{split}/{dir}/scores.csv", index_col=0)
+        leaderboard = pd.concat((leaderboard, scores))
+
+    return leaderboard
+
 
 def postprocess_leaderboard(df, format="md"):
     df = df.round(2)
@@ -40,29 +40,50 @@ def postprocess_leaderboard(df, format="md"):
     return df
 
 
-def generate_table(format="md"):
-    dev_lb = pd.read_csv("dev_leaderboard.csv", index_col=0)
-    test_lb = pd.read_csv("test_leaderboard.csv", index_col=0)
+def create_leaderboard_df(split, aggregate_baselines=False):
+    leaderboard = pd.read_csv(f"{split}_leaderboard.csv", index_col=0)
+    if aggregate_baselines:
+        leaderboard = leaderboard.max().to_frame("Best baseline").T
 
-    dev_lb, test_lb = assemble_subdirs(dev_lb, test_lb)
-
-    dev_lb = postprocess_leaderboard(dev_lb, format=format)
-    test_lb = postprocess_leaderboard(test_lb, format=format)
+    leaderboard = assemble_subdirs(leaderboard, split)
     
+    return leaderboard
+
+
+def generate_table(*, format="md", aggregate_baselines=False, test=False):
+    dev_lb = create_leaderboard_df("dev", aggregate_baselines=aggregate_baselines)
+    dev_lb = postprocess_leaderboard(dev_lb, format=format)
+
+
+    if test:
+        test_lb = create_leaderboard_df("test", aggregate_baselines=aggregate_baselines)
+        test_lb = postprocess_leaderboard(test_lb, format=format)
+
     if format == "md":
         with open("README.md", "w+") as f:
-            f.write(TEMPL_STR.format(
-                test_lb=test_lb.to_markdown(), 
-                dev_lb=dev_lb.to_markdown(),
-            ))
+            if test:
+                f.write(TEMPL_STR_ALL.format(
+                    dev_lb=dev_lb.to_markdown(),
+                    test_lb=test_lb.to_markdown(),
+                ))
+            else:        
+                f.write(TEMPL_STR.format(
+                    dev_lb=dev_lb.to_markdown(),
+                ))
     else:
         dev_lb.to_latex("dev_leaderboard.tex", escape=False)
-        test_lb.to_latex("test_leaderboard.tex", escape=False)
+        if test:
+            test_lb.to_latex("test_leaderboard.tex", escape=False)
 
 
 def main():
-    generate_table()
-    # generate_table(format="latex")
+    ap = ArgumentParser()
+    ap.add_argument("--test", type=bool)
+    ap.add_argument("--latex", type=bool)
+    args = ap.parse_args()
+
+    format = "latex" if args.latex else "md"
+    generate_table(format=format, test=args.test)
 
 
 if __name__ == "__main__":

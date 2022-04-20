@@ -88,11 +88,6 @@ def evaluate_baselines():
 
 
 def main() -> None:
-    for s in "dev", "test":
-        p = "evaluation/" + s
-        if not os.path.exists():
-            os.mkdir(p)
-
     eval_baselines = False
 
     if eval_baselines:
