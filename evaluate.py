@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from utils import read_config
 from datasets import load_metric
@@ -57,6 +58,16 @@ def compute_metrics(dev_set, test_set, model_name):
         )
 
         scores.update(meteor_score)
+
+        bertscore = load_metric("bertscore")
+        bert_scores = bertscore.compute(
+            lang="en",
+            predictions=predictions,
+            references=references,
+        )
+        bert_mean_f1 = np.mean(bert_scores["f1"])
+        scores["bertscore (mean f1)"]
+        del bertscore
 
         scores_df = pd.DataFrame(scores, index=[model_name])
         scores_df.index.name = "Model"
