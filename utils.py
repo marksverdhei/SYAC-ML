@@ -31,8 +31,20 @@ class DocumentPreprocessor:
         self.sep_token_sub = config.get("sep_token_sub", " ")
         self.regex_args = config.get("regex_sub_args", None)
         self.cased = config.get("cased", True) 
+        self.qa_prompt = config.get("qa_prompt", None) 
+        
 
     def __call__(self, title: str, body: str) -> str:
+        if self.qa_prompt is not None:
+            if self.qa_prompt == 1:
+                # 1: append question mark
+                title = title_to_quesiton(title)
+            elif self.qa_prompt == 2:
+                # 2: truncate before interrogative
+                title = title_to_quesiton2(title)
+            else:
+                raise NotImplementedError("Select qa prompt 1, 2 or None")
+
         if self.sep_token is not None:
             title = title.replace(self.sep_token, self.sep_token_sub)
             body = body.replace(self.sep_token, self.sep_token_sub)
@@ -165,7 +177,29 @@ def get_model_parameters(model: torch.nn.Module) -> int:
 
 
 def title_to_quesiton(title: str) -> str:
-    raise NotImplementedError("TODO")
+    """
+    Tries to convert titles to questions
+
+    Here's the reason why
+    this is why
+    the reason why x is verb y
+    why is x verb why
+    This is what you need to know
+
+    what you need to know?
+
+    here are the leaked relese dates
+    what is the leaked release dates?
+    """
+
+    if title.endswith("?"):
+        return title
+
+    title = title + "?"
+    return title
+
+
+def title_to_quesiton2(title: str) -> str:
     interrogatives = [
         "which", 
         "what",
@@ -178,34 +212,12 @@ def title_to_quesiton(title: str) -> str:
         "why",
     ]
 
-    implicit_question_patterns = [
-        "this"
-    ]
-
-    # TODO
-
     if title.endswith("?"):
         return title
 
-    title = title + "?"
-
-    title_lower = title.lower()
-    if title_lower.startswith("why"):
-        title = title.split(" ")
-        swp = title[1]
-        title[1] = title[2]
-        title[2] = swp
-        return " ".join(title)
-
-    if "reason why" in title_lower:
-        title = title.split(" ")
-        slice_index = title_lower.split(" ").index("reason")
-        return " ".join(title[slice_index:])
-
-    title_interrogatives = set(filter(lambda x: x in title_lower, interrogatives))
-    if title_interrogatives:
-        print(title_interrogatives)
+    match = re.search(title, "(" + "|".join(interrogatives) + ")")
+    if match is None:
+        return title
     else:
-        title = title.replace("this", "what")
-
-    return title
+        s, _ = match.span()
+        return title[s:] + "?"
