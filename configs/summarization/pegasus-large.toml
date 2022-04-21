@@ -7,7 +7,7 @@ test_path = "reddit-syac/test.csv"
 # Model name determines checkpoint and directory and 
 name = "pegasus-large"
 tokenizer_path = "google/pegasus-large"
-model_path = "facebook/pegasus-large"
+model_path = "google/pegasus-large"
 
 [preprocessor]
 sep_token = '|'
