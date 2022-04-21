@@ -4,9 +4,9 @@ val_path = "reddit-syac/dev.csv"
 test_path = "reddit-syac/test.csv"
 
 [model]
-name = "UnifiedQA-v2-base"
-tokenizer_path = "allenai/unifiedqa-v2-t5-base-1363200"
-model_path = "allenai/unifiedqa-v2-t5-base-1363200"
+name = "unifiedqa-t5-v2-base"
+tokenizer_path = "t5-base"
+model_path = "allenai/unifiedqa-t5-v2-base-1363200"
 
 [preprocessor]
 sep_token = '\n'
