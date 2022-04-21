@@ -4,12 +4,12 @@ val_path = "reddit-syac/dev.csv"
 test_path = "reddit-syac/test.csv"
 
 [model]
-name = "unifiedqa-t5-base-zero-shot-qa-prompt1"
+name = "unifiedqa-t5-base-zero-shot-qa-prompt2"
 tokenizer_path = "allenai/unifiedqa-t5-base"
 model_path = "allenai/unifiedqa-t5-base"
 
 [preprocessor]
-qa_prompt = 1
+qa_prompt = 2
 sep_token = '\n'
 cased = false
 # 0: pattern, 1: repl
