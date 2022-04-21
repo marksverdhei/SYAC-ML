@@ -35,7 +35,7 @@ def predict_on_datasets(dev_set_path, test_set_path, pipeline):
     def predict_on_row(row):
         return pipeline(row.title, row.body)
 
-    dev_predictions = dev_set.progress_apply(predict_on_row, axis=1).rename(pipeline.model_name)
+    dev_predictions = dev_set.progress_apply(predict_on_row, axis=1).rename(pipeline.name)
     test_predictions = test_set.progress_apply(predict_on_row, axis=1)
 
     return dev_predictions, test_predictions

@@ -12,6 +12,7 @@ class TitleBaseline(TitleAnsweringPipeline):
     The baseline is totally useless for title answering but
     gives a lower bound for the expected seq2seq score
     """
+    name = "TitleBaseline"
     def __call__(self, title, body) -> str:
         return title
 
@@ -20,11 +21,13 @@ class MostCommonAnswerBaseline(TitleAnsweringPipeline):
     """
     This baseline returns the most common title answer: 'no'
     """
+    name = "MostCommonAnswerBaseline"
     def __call__(self, title, body) -> str:
         return "no"
 
 
 class CosineSimilarityBaseline(TitleAnsweringPipeline):
+    name = "CosineSimilarityBaseline"
     vectorizer_args = {
         "binary": True,
         "stop_words": "english",
@@ -45,6 +48,7 @@ class CosineSimilarityBaseline(TitleAnsweringPipeline):
 
 
 class EditDistanceBaseline(TitleAnsweringPipeline):
+    name = "EditDistanceBaseline"
     def __call__(self, title, body) -> str:
         body_sentences = nltk.tokenize.sent_tokenize(body)
         return min(body_sentences, key=partial(edit_distance, title))

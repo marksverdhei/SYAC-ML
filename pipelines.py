@@ -51,10 +51,10 @@ class TitleAnsweringPipeline(ABC):
 
 class AbstractiveTAPipeline(TitleAnsweringPipeline):
     """
-    
+    Loads a pretrained Seq2Seq model
     """
     def __init__(self, model_name, preprocessor, tokenizer, model, max_length=None) -> None:
-        self.model_name = model_name
+        self.name = model_name
         self.preprocessor = preprocessor
         self.tokenizer = tokenizer
         self.model = model
@@ -80,7 +80,7 @@ class ExtractiveQAPipeline(TitleAnsweringPipeline):
     """
 
     def __init__(self, model_name, model_path, tokenizer_path):
-        self.model_name = model_name
+        self.name = model_name
         self.pipeline = pipeline(
             "question-answering", 
             model=model_path, 

@@ -59,15 +59,15 @@ def compute_metrics(dev_set, test_set, model_name):
 
         scores.update(meteor_score)
 
-        bertscore = load_metric("bertscore")
-        bert_scores = bertscore.compute(
-            lang="en",
-            predictions=predictions,
-            references=references,
-        )
-        bert_mean_f1 = np.mean(bert_scores["f1"])
-        scores["bertscore (mean f1)"]
-        del bertscore
+        # bertscore = load_metric("bertscore")
+        # bert_scores = bertscore.compute(
+        #     lang="en",
+        #     predictions=predictions,
+        #     references=references,
+        # )
+        # bert_mean_f1 = np.mean(bert_scores["f1"])
+        # scores["bertscore"] = bert_mean_f1
+        # del bertscore
 
         scores_df = pd.DataFrame(scores, index=[model_name])
         scores_df.index.name = "Model"
@@ -99,7 +99,7 @@ def evaluate_baselines():
 
 
 def main() -> None:
-    eval_baselines = False
+    eval_baselines = True
 
     if eval_baselines:
         evaluate_baselines()
