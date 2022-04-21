@@ -36,12 +36,14 @@ class TitleAnsweringPipeline(ABC):
             
 
             return AbstractiveTAPipeline(
+                model_name=model_name,
                 preprocessor=DocumentPreprocessor(preprocessor_conf),
                 tokenizer=tokenizer,
                 model=model,
             )
         else:
             return ExtractiveQAPipeline(
+                model_name=model_name,
                 model_path=best_checkpoint,
                 tokenizer_path=tokenizer_path,
             )
@@ -51,7 +53,8 @@ class AbstractiveTAPipeline(TitleAnsweringPipeline):
     """
     
     """
-    def __init__(self, preprocessor, tokenizer, model, max_length=None) -> None:
+    def __init__(self, model_name, preprocessor, tokenizer, model, max_length=None) -> None:
+        self.model_name = model_name
         self.preprocessor = preprocessor
         self.tokenizer = tokenizer
         self.model = model
@@ -61,7 +64,12 @@ class AbstractiveTAPipeline(TitleAnsweringPipeline):
     def __call__(self, title, body) -> str:
         input_str = self.preprocessor(title, body)
         inputs = self.tokenizer(input_str, return_tensors="pt", truncation=True).to(self.model.device)
-        generated_tokens, = self.model.generate(**inputs).to("cpu")
+        generated_tokens, = self.model.generate(
+            **inputs, 
+            num_beams=1, 
+            do_sample=False,
+            
+        ).to("cpu")
         output = self.tokenizer.decode(generated_tokens, skip_special_tokens=True)
         return output
 
@@ -71,7 +79,8 @@ class ExtractiveQAPipeline(TitleAnsweringPipeline):
     Model for title answering based on a QA model huggingface pipeline
     """
 
-    def __init__(self, model_path, tokenizer_path):
+    def __init__(self, model_name, model_path, tokenizer_path):
+        self.model_name = model_name
         self.pipeline = pipeline(
             "question-answering", 
             model=model_path, 
