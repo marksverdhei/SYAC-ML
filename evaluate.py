@@ -99,7 +99,7 @@ def evaluate_baselines():
 
 
 def main() -> None:
-    eval_baselines = True
+    eval_baselines = False
 
     if eval_baselines:
         evaluate_baselines()
