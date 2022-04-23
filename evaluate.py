@@ -1,10 +1,14 @@
-import numpy as np
+import os
 import pandas as pd
 from utils import read_config
 from datasets import load_metric
 from baselines import BASELINES
 from tqdm import tqdm
 from predict import predict_on_datasets
+
+rouge = load_metric("rouge")
+bleu = load_metric("sacrebleu")
+meteor = load_metric("meteor")
 
 tqdm.pandas()
 
@@ -19,62 +23,46 @@ def evaluate_from_config(config):
     dev_predictions = pd.read_csv(f"evaluation/dev/{model_name}/predictions.csv", index_col=0)
     test_predictions = pd.read_csv(f"evaluation/test/{model_name}/predictions.csv", index_col=0)
 
-    dev_set["prediction"] = dev_predictions
-    test_set["prediction"] = test_predictions
-
-    dev_scores, test_scores = compute_metrics(dev_set, test_set, model_name)
+    dev_scores, test_scores = evaluate_predictions((dev_set, test_set), (dev_predictions, test_predictions), model_name)
     dev_scores.to_csv(f"evaluation/dev/{model_name}/scores.csv")
     test_scores.to_csv(f"evaluation/test/{model_name}/scores.csv")
 
 
-def compute_metrics(dev_set, test_set, model_name):
-    rouge = load_metric("rouge")
-    bleu = load_metric("sacrebleu")
-    meteor = load_metric("meteor")
-    scores_dfs = []
+def evaluate_predictions(datasets, predictions, model_name="Unnamed model"):
+    for df, preds in zip(datasets, predictions):
+        df["prediction"] = preds
+        yield compute_metrics(df, model_name)
 
-    for df in (dev_set, test_set):
-        scores = {}
-        predictions = df["prediction"].array
-        references = df["target"].array
 
-        rouge_scores = rouge.compute(
-            predictions=predictions,
-            references=references,
-        )
+def compute_metrics(df, model_name):
+    scores = {}
+    predictions = df["prediction"].array
+    references = df["target"].array
 
-        scores.update({k: v.mid.fmeasure for k, v in rouge_scores.items()})
+    rouge_scores = rouge.compute(
+        predictions=predictions,
+        references=references,
+    )
 
-        bleu_score = bleu.compute(
-            predictions=predictions,
-            references=references[:, None],
-        )
+    scores.update({k: v.mid.fmeasure for k, v in rouge_scores.items()})
 
-        scores["bleu"] = bleu_score["score"]
+    bleu_score = bleu.compute(
+        predictions=predictions,
+        references=references[:, None],
+    )
 
-        meteor_score = meteor.compute(
-            predictions=predictions,
-            references=references,
-        )
+    scores["bleu"] = bleu_score["score"]
 
-        scores.update(meteor_score)
+    meteor_score = meteor.compute(
+        predictions=predictions,
+        references=references,
+    )
 
-        # bertscore = load_metric("bertscore")
-        # bert_scores = bertscore.compute(
-        #     lang="en",
-        #     predictions=predictions,
-        #     references=references,
-        # )
-        # bert_mean_f1 = np.mean(bert_scores["f1"])
-        # scores["bertscore"] = bert_mean_f1
-        # del bertscore
+    scores.update(meteor_score)
 
-        scores_df = pd.DataFrame(scores, index=[model_name])
-        scores_df.index.name = "Model"
-        scores_dfs.append(scores_df)
-
-    return scores_dfs
-
+    scores_df = pd.DataFrame(scores, index=[model_name])
+    scores_df.index.name = "Model"
+    return scores_df
 
 def evaluate_baselines():
     dev_set_path = "reddit-syac/dev.csv"
@@ -99,10 +87,34 @@ def evaluate_baselines():
 
 
 def main() -> None:
+    recursive = True
     eval_baselines = False
 
     if eval_baselines:
         evaluate_baselines()
+
+    elif recursive:
+        splits = ["dev"]
+        splits = ["dev", "test"]
+
+        for s in splits:
+            eval_set_path = f"reddit-syac/{s}.csv"
+            eval_set = eval_set = pd.read_csv(eval_set_path, index_col=0)
+            pred_dir = f"evaluation/{s}/"
+
+            for model_name in os.listdir(pred_dir):
+                pred_path = pred_dir + model_name + "/predictions.csv"
+                scores_path = pred_dir + model_name + "/scores.csv"
+                if not os.path.exists(pred_path):
+                    print("WARNNING: didnt find predictions for ", model_name)
+
+                if not os.path.exists(scores_path):
+                    predictions = pd.read_csv(pred_path, index_col=0)
+                    # FIXME: ugly hack for unsolved bug
+                    predictions = predictions[:500]
+                    scores, = evaluate_predictions([eval_set], [predictions], model_name)
+                    scores.to_csv(scores_path)
+
     else:
         config = read_config()
         evaluate_from_config(config)
