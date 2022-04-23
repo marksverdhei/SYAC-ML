@@ -1,9 +1,0 @@
-[dataset]
-train_path = "reddit-syac/train.csv"
-val_path = "reddit-syac/dev.csv"
-test_path = "reddit-syac/test.csv"
-
-[model]
-name = "pegasus-large-zero-shot"
-tokenizer_path = "google/pegasus-large"
-model_path = "google/pegasus-large"
