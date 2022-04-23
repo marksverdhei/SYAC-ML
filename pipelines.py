@@ -34,7 +34,6 @@ class TitleAnsweringPipeline(ABC):
             tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
             model = AutoModelForSeq2SeqLM.from_pretrained(best_checkpoint)
             
-
             return AbstractiveTAPipeline(
                 model_name=model_name,
                 preprocessor=DocumentPreprocessor(preprocessor_conf),

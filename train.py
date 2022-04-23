@@ -124,7 +124,9 @@ def train_model(
         resume_from_checkpoint = False
 
     train_output = trainer.train(resume_from_checkpoint=resume_from_checkpoint)
-    trainer.save_model()
+
+    if training_args.save_strategy.value != "epoch":
+        trainer.save_model()
     print(train_output)
 
     if training_args.evaluation_strategy.value != "epoch":
