@@ -1,0 +1,32 @@
+[dataset]
+train_path = "reddit-syac/train.csv"
+val_path = "reddit-syac/dev.csv"
+test_path = "reddit-syac/test.csv"
+
+[model]
+# Model name determines checkpoint and directory and 
+name = "bart-large-xsum"
+tokenizer_path = "facebook/bart-large-xsum"
+model_path = "facebook/bart-large-xsum"
+# max_input_length = 1024
+
+[preprocessor]
+sep_token = '|'
+cased = true
+
+[train]
+
+[train.training_args]
+num_train_epochs = 20
+per_device_eval_batch_size = 8
+per_device_train_batch_size = 8
+learning_rate = 5e-6
+logging_steps = 256
+warmup_steps = 512
+save_strategy = "epoch"
+evaluation_strategy = "epoch"
+weight_decay = 0.01
+save_total_limit = 1
+
+[train.early_stopping]
+early_stopping_patience = 4
