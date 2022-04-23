@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=syac-train
 #SBATCH --account=ec30
-#SBATCH --time=03:00:00
-#SBATCH --mem-per-gpu=30G
+#SBATCH --time=10:00:00
+#SBATCH --mem-per-gpu=50G
 #SBATCH --partition=accel
-#SBATCH --gpus=1
+#SBATCH --gpus-per-node=1
 
 module purge
 module load CUDA/11.3.1
