@@ -5,6 +5,7 @@ from datasets import load_metric
 from baselines import BASELINES
 from tqdm import tqdm
 from predict import predict_on_datasets
+from transformers import set_seed
 
 rouge = load_metric("rouge")
 bleu = load_metric("sacrebleu")
@@ -85,6 +86,7 @@ def evaluate_baselines():
 
 
 def main() -> None:
+    set_seed(42)
     recursive = True
     eval_baselines = False
 
