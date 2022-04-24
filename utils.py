@@ -168,6 +168,12 @@ def read_config(fields: Union[str, List[str]] = None,) -> Dict[str, str]:
     config_path = get_config_path_arg()
     conf = toml.load(config_path)
 
+    conf["dataset"] = {
+        "train_path": "reddit-syac/train.csv",
+        "val_path": "reddit-syac/dev.csv",
+        "test_path": "reddit-syac/test.csv",
+    }
+
     if fields is None:
         return conf
     elif isinstance(fields, list):
