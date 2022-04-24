@@ -7,12 +7,9 @@ from typing import Any, Dict, List, Union
 import pandas as pd
 import toml
 import torch
-from torch.utils.data.dataloader import DataLoader
 from transformers import (
     AutoTokenizer,
     AutoModelForSequenceClassification,
-    PreTrainedModel,
-    PreTrainedTokenizer,
     TrainerCallback,
 )
 from transformers.trainer_utils import get_last_checkpoint
@@ -30,9 +27,8 @@ class DocumentPreprocessor:
         self.sep_token = config.get("sep_token", None)
         self.sep_token_sub = config.get("sep_token_sub", " ")
         self.regex_args = config.get("regex_sub_args", None)
-        self.cased = config.get("cased", True) 
-        self.qa_prompt = config.get("qa_prompt", None) 
-        
+        self.cased = config.get("cased", True)
+        self.qa_prompt = config.get("qa_prompt", None)
 
     def __call__(self, title: str, body: str) -> str:
         if self.qa_prompt is not None:
@@ -81,15 +77,22 @@ class SampleGenerationCallback(TrainerCallback):
         # T: Mega Millions is up to $970 million—there’s one way to up the odds of winning, according to a Harvard statistics professor
         # A: Buy more tickets with different numbers. Literally the only way to improve odds in a game of pure chance.
         "l2rn92",
+        # Diet with beer and pies
+        "550o4v",
     ]
 
     "This callback produces title answers on a few examples"
+
     def __init__(self, eval_set_path, tokenizer, preprocess_fn) -> None:
         super().__init__()
         self.tokenizer = tokenizer
-        self.example_subset = pd.read_csv(eval_set_path, index_col=0).loc[self.EXAMPLE_IDS]
+        self.example_subset = pd.read_csv(eval_set_path, index_col=0).loc[
+            self.EXAMPLE_IDS
+        ]
         self.inputs = {
-            post_id: tokenizer(preprocess_fn(row.title, row.body), return_tensors="pt", truncation=True)
+            post_id: tokenizer(
+                preprocess_fn(row.title, row.body), return_tensors="pt", truncation=True
+            )
             for post_id, row in self.example_subset.iterrows()
         }
 
@@ -97,7 +100,7 @@ class SampleGenerationCallback(TrainerCallback):
         model = kwargs["model"]
         for post_id, inputs in self.inputs.items():
             row = self.example_subset.loc[post_id]
-            output, = model.generate(**inputs.to(model.device))
+            (output,) = model.generate(**inputs.to(model.device))
             prediction = self.tokenizer.decode(output.to("cpu"))
 
             print("=" * 20, "title", "=" * 20)
@@ -114,11 +117,14 @@ class ParaphraseProbabilityScorer:
     This class is a model based scores for seq2seq tasks 
     leveraging a paraphrase detection model
     """
+
     model_checkpoint = "coderpotter/adversarial-paraphrasing-detector"
 
     def __init__(self):
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_checkpoint)
-        self.model = AutoModelForSequenceClassification.from_pretrained(self.model_checkpoint)
+        self.model = AutoModelForSequenceClassification.from_pretrained(
+            self.model_checkpoint
+        )
         self.model.eval()
 
     @torch.no_grad()
@@ -133,8 +139,8 @@ class ParaphraseProbabilityScorer:
 def get_config_path_arg():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--config", 
-        default=CONFIG_PATH, 
+        "--config",
+        default=CONFIG_PATH,
         help="path to the config toml file of the script",
     )
     args = parser.parse_args()
@@ -149,13 +155,12 @@ def get_best_checkpoint(checkpoints_dir: str) -> str:
         best_path = json.load(f)["best_model_checkpoint"]
     return best_path
 
+
 def read_tsv(path):
     return pd.read_csv(path, index_col=0, sep="\t")
 
 
-def read_config(
-    fields: Union[str, List[str]] = None,
-) -> Dict[str, str]:
+def read_config(fields: Union[str, List[str]] = None,) -> Dict[str, str]:
     """
     This function reads a specified config path from the command line
     if it is supplied
@@ -201,7 +206,7 @@ def title_to_quesiton(title: str) -> str:
 
 def title_to_quesiton2(title: str) -> str:
     interrogatives = [
-        "which", 
+        "which",
         "what",
         "whose",
         "who",

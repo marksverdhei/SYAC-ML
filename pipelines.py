@@ -17,13 +17,12 @@ class TitleAnsweringPipeline(ABC):
     def __call__(self, title: str, body: str) -> str:
         pass
 
-
     @staticmethod
     def from_config(config):
         model_name = config["model"]["name"]
         tokenizer_path = config["model"]["tokenizer_path"]
         preprocessor_conf = config.get("preprocessor", {})
-        
+
         output_dir = f"./checkpoints/{model_name}/"
         if os.path.isdir(output_dir):
             best_checkpoint = get_best_checkpoint(output_dir)
@@ -33,7 +32,7 @@ class TitleAnsweringPipeline(ABC):
         if not config["model"].get("extractive_qa"):
             tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
             model = AutoModelForSeq2SeqLM.from_pretrained(best_checkpoint)
-            
+
             return AbstractiveTAPipeline(
                 model_name=model_name,
                 preprocessor=DocumentPreprocessor(preprocessor_conf),
@@ -52,7 +51,10 @@ class AbstractiveTAPipeline(TitleAnsweringPipeline):
     """
     Loads a pretrained Seq2Seq model
     """
-    def __init__(self, model_name, preprocessor, tokenizer, model, max_length=None) -> None:
+
+    def __init__(
+        self, model_name, preprocessor, tokenizer, model, max_length=None
+    ) -> None:
         self.name = model_name
         self.preprocessor = preprocessor
         self.tokenizer = tokenizer
@@ -62,12 +64,11 @@ class AbstractiveTAPipeline(TitleAnsweringPipeline):
     @torch.no_grad()
     def __call__(self, title, body) -> str:
         input_str = self.preprocessor(title, body)
-        inputs = self.tokenizer(input_str, return_tensors="pt", truncation=True).to(self.model.device)
-        generated_tokens, = self.model.generate(
-            **inputs, 
-            num_beams=1, 
-            do_sample=False,
-            
+        inputs = self.tokenizer(input_str, return_tensors="pt", truncation=True).to(
+            self.model.device
+        )
+        (generated_tokens,) = self.model.generate(
+            **inputs, num_beams=1, do_sample=False,
         ).to("cpu")
         output = self.tokenizer.decode(generated_tokens, skip_special_tokens=True)
         return output
@@ -81,13 +82,10 @@ class ExtractiveQAPipeline(TitleAnsweringPipeline):
     def __init__(self, model_name, model_path, tokenizer_path):
         self.name = model_name
         self.pipeline = pipeline(
-            "question-answering", 
-            model=model_path, 
-            tokenizer=tokenizer_path,
+            "question-answering", model=model_path, tokenizer=tokenizer_path,
         )
         self.tokenizer = self.pipeline.tokenizer
 
     def __call__(self, title, body) -> str:
         result = self.pipeline({"question": title, "context": body})
         return result["answer"]
-

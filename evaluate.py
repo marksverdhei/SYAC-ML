@@ -12,6 +12,7 @@ meteor = load_metric("meteor")
 
 tqdm.pandas()
 
+
 def evaluate_from_config(config):
     model_name = config["model"]["name"]
     dev_set_path = config["dataset"]["val_path"]
@@ -20,10 +21,16 @@ def evaluate_from_config(config):
     dev_set = pd.read_csv(dev_set_path, index_col=0)
     test_set = pd.read_csv(test_set_path, index_col=0)
 
-    dev_predictions = pd.read_csv(f"evaluation/dev/{model_name}/predictions.csv", index_col=0)
-    test_predictions = pd.read_csv(f"evaluation/test/{model_name}/predictions.csv", index_col=0)
+    dev_predictions = pd.read_csv(
+        f"evaluation/dev/{model_name}/predictions.csv", index_col=0
+    )
+    test_predictions = pd.read_csv(
+        f"evaluation/test/{model_name}/predictions.csv", index_col=0
+    )
 
-    dev_scores, test_scores = evaluate_predictions((dev_set, test_set), (dev_predictions, test_predictions), model_name)
+    dev_scores, test_scores = evaluate_predictions(
+        (dev_set, test_set), (dev_predictions, test_predictions), model_name
+    )
     dev_scores.to_csv(f"evaluation/dev/{model_name}/scores.csv")
     test_scores.to_csv(f"evaluation/test/{model_name}/scores.csv")
 
@@ -39,24 +46,15 @@ def compute_metrics(df, model_name):
     predictions = df["prediction"].array
     references = df["target"].array
 
-    rouge_scores = rouge.compute(
-        predictions=predictions,
-        references=references,
-    )
+    rouge_scores = rouge.compute(predictions=predictions, references=references,)
 
     scores.update({k: v.mid.fmeasure for k, v in rouge_scores.items()})
 
-    bleu_score = bleu.compute(
-        predictions=predictions,
-        references=references[:, None],
-    )
+    bleu_score = bleu.compute(predictions=predictions, references=references[:, None],)
 
     scores["bleu"] = bleu_score["score"]
 
-    meteor_score = meteor.compute(
-        predictions=predictions,
-        references=references,
-    )
+    meteor_score = meteor.compute(predictions=predictions, references=references,)
 
     scores.update(meteor_score)
 
@@ -64,13 +62,14 @@ def compute_metrics(df, model_name):
     scores_df.index.name = "Model"
     return scores_df
 
+
 def evaluate_baselines():
     dev_set_path = "reddit-syac/dev.csv"
     test_set_path = "reddit-syac/test.csv"
-    
+
     result_dev_df = pd.DataFrame()
     result_test_df = pd.DataFrame()
-    
+
     for name, pipeline in BASELINES.items():
         dev_set = pd.read_csv(dev_set_path, index_col=0)
         test_set = pd.read_csv(test_set_path, index_col=0)
@@ -83,7 +82,6 @@ def evaluate_baselines():
 
     result_dev_df.to_csv("evaluation/dev_leaderboard.csv")
     result_test_df.to_csv("evaluation/test_leaderboard.csv")
-
 
 
 def main() -> None:
@@ -112,7 +110,9 @@ def main() -> None:
                     predictions = pd.read_csv(pred_path, index_col=0)
                     # FIXME: ugly hack for unsolved bug
                     predictions = predictions[:500]
-                    scores, = evaluate_predictions([eval_set], [predictions], model_name)
+                    (scores,) = evaluate_predictions(
+                        [eval_set], [predictions], model_name
+                    )
                     scores.to_csv(scores_path)
 
     else:

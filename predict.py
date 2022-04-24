@@ -15,8 +15,9 @@ def predict_from_config(config):
     pipeline = TitleAnsweringPipeline.from_config(config)
     pipeline.tokenizer.model_max_length = 512
 
-
-    dev_predictions, test_predictions = predict_on_datasets(dev_set_path, test_set_path, pipeline)
+    dev_predictions, test_predictions = predict_on_datasets(
+        dev_set_path, test_set_path, pipeline
+    )
 
     if not os.path.exists(f"evaluation/dev/{model_name}"):
         os.mkdir(f"evaluation/dev/{model_name}")
@@ -35,8 +36,12 @@ def predict_on_datasets(dev_set_path, test_set_path, pipeline):
     def predict_on_row(row):
         return pipeline(row.title, row.body)
 
-    dev_predictions = dev_set.progress_apply(predict_on_row, axis=1).rename(pipeline.name)
-    test_predictions = test_set.progress_apply(predict_on_row, axis=1).rename(pipeline.name)
+    dev_predictions = dev_set.progress_apply(predict_on_row, axis=1).rename(
+        pipeline.name
+    )
+    test_predictions = test_set.progress_apply(predict_on_row, axis=1).rename(
+        pipeline.name
+    )
 
     return dev_predictions, test_predictions
 

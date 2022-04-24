@@ -21,7 +21,7 @@ from utils import (
 class SYACDataset(Dataset):
     def __init__(self, dataset_path, tokenizer, preprocessor) -> None:
         df = pd.read_csv(dataset_path)
-        
+
         self.tokenizer = tokenizer
         self.length = len(df)
         self.index = list(df.index)
@@ -31,7 +31,9 @@ class SYACDataset(Dataset):
 
     def __getitem__(self, index):
         inputs = self.tokenizer(self.texts[index], return_tensors="pt", truncation=True)
-        labels = self.tokenizer(self.labels[index], return_tensors="pt", truncation=True).input_ids
+        labels = self.tokenizer(
+            self.labels[index], return_tensors="pt", truncation=True
+        ).input_ids
         data = inputs
         data["label_ids"] = labels
         return data
@@ -59,11 +61,7 @@ def collate_data(data):
 
 
 def train_model(
-    train_set_path, 
-    val_set_path, 
-    model_conf,
-    preprocessor_conf,
-    train_conf,
+    train_set_path, val_set_path, model_conf, preprocessor_conf, train_conf,
 ) -> None:
     """
     Trains and checkpoints the model with intermediate evaluations
@@ -82,7 +80,6 @@ def train_model(
     train_data = SYACDataset(train_set_path, tokenizer, preprocessor)
     val_data = SYACDataset(val_set_path, tokenizer, preprocessor)
 
-
     print("=" * 20, "\n")
     print("Training", model_name)
     print("Model parameters:", get_model_parameters(model) // 1e6, "million")
@@ -96,17 +93,11 @@ def train_model(
     )
 
     callbacks = [
-        SampleGenerationCallback(
-            val_set_path,
-            tokenizer,
-            preprocessor
-        ),
+        SampleGenerationCallback(val_set_path, tokenizer, preprocessor),
     ]
 
     if use_early_stopping:
-        callbacks.append(
-            EarlyStoppingCallback(**train_conf["early_stopping"]),
-        )
+        callbacks.append(EarlyStoppingCallback(**train_conf["early_stopping"]),)
 
     trainer = Seq2SeqTrainer(
         model=model,
@@ -132,7 +123,7 @@ def train_model(
     if training_args.evaluation_strategy.value != "epoch":
         eval_post_train = trainer.evaluate()
         print(eval_post_train)
-        
+
 
 def main():
     conf = read_config()
