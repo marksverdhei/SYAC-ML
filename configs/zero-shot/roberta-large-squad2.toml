@@ -5,6 +5,6 @@ test_path = "reddit-syac/test.csv"
 
 [model]
 extractive_qa = true
-name = "roberta-large-squad-zero-shot"
+name = "roberta-large-squad2-zero-shot"
 tokenizer_path = "deepset/roberta-large-squad2"
 model_path = "deepset/roberta-large-squad2"
