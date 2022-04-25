@@ -5,6 +5,7 @@ from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, pipeline
 import torch
 from utils import DocumentPreprocessor, get_best_checkpoint
 
+MAX_GEN_LEN = 128
 
 class TitleAnsweringPipeline(ABC):
     """
@@ -53,13 +54,20 @@ class AbstractiveTAPipeline(TitleAnsweringPipeline):
     """
 
     def __init__(
-        self, model_name, preprocessor, tokenizer, model, max_length=None
+        self, 
+        model_name, 
+        preprocessor, 
+        tokenizer, 
+        model, 
+        max_input_length=None, 
+        max_generation_length=None,
     ) -> None:
         self.name = model_name
         self.preprocessor = preprocessor
         self.tokenizer = tokenizer
         self.model = model
-        self.tokenizer.model_max_length = max_length
+        self.tokenizer.model_max_length = max_input_length
+        self.model.config.max_length = max_generation_length or MAX_GEN_LEN
 
     @torch.no_grad()
     def __call__(self, title, body) -> str:
