@@ -1,10 +1,5 @@
-[dataset]
-train_path = "reddit-syac/train.csv"
-val_path = "reddit-syac/dev.csv"
-test_path = "reddit-syac/test.csv"
-
 [model]
-# Model name determines checkpoint and directory and 
+# Model name determines checkpoint and logs directory
 name = "unifiedqa-t5-base"
 tokenizer_path = "allenai/unifiedqa-t5-base"
 model_path = "allenai/unifiedqa-t5-base"
@@ -20,6 +15,8 @@ regex_sub_args = ["'(.*)'", '\1']
 [train]
 
 [train.training_args]
+# These arguments will be send
+# directly to the TrainingArguments object for the trainer
 seed = 42
 num_train_epochs = 20
 per_device_eval_batch_size = 32
@@ -34,4 +31,6 @@ optim = "adafactor"
 save_total_limit = 2
 
 [train.early_stopping]
+# Optional early stopping. Remove this field
+# if no early stopping is desired
 early_stopping_patience = 2

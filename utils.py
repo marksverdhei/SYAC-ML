@@ -15,9 +15,6 @@ from transformers import (
 from transformers.trainer_utils import get_last_checkpoint
 
 
-CONFIG_PATH = "config.toml"
-
-
 class DocumentPreprocessor:
     """
     The preprocessor makes the data input on the preferred form of the model.
@@ -140,7 +137,7 @@ def get_config_path_arg():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--config",
-        default=CONFIG_PATH,
+        required=True,
         help="path to the config toml file of the script",
     )
     args = parser.parse_args()
