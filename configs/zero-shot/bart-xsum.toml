@@ -1,0 +1,6 @@
+[model]
+# Model name determines checkpoint and directory and 
+name = "bart-large-xsum-zero-shot"
+tokenizer_path = "facebook/bart-large-xsum"
+model_path = "facebook/bart-large-xsum"
+# max_input_length = 1024
