@@ -4,14 +4,12 @@ import argparse
 import re
 from typing import Any, Dict, List, Union
 
+from datasets import load_metric
 import pandas as pd
+import nltk
 import toml
 import torch
-from transformers import (
-    AutoTokenizer,
-    AutoModelForSequenceClassification,
-    TrainerCallback,
-)
+from transformers import TrainerCallback
 from transformers.trainer_utils import get_last_checkpoint
 
 
@@ -109,28 +107,31 @@ class SampleGenerationCallback(TrainerCallback):
             print("\n")
 
 
-class ParaphraseProbabilityScorer:
+class EXTOracle:
     """
-    This class is a model based scores for seq2seq tasks 
-    leveraging a paraphrase detection model
+    Although we call this a baseline, it cannot implement the
+    pipeline interface as it requires access to the labels.
     """
 
-    model_checkpoint = "coderpotter/adversarial-paraphrasing-detector"
+    name = "EXT-Oracle"
+    rouge = load_metric("rouge")
 
-    def __init__(self):
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_checkpoint)
-        self.model = AutoModelForSequenceClassification.from_pretrained(
-            self.model_checkpoint
+    # def predict_on_df(self, df):
+    #     return df.apply(self.predict_on_row, axis=1)
+    def predict_on_row(self, row):
+        body_sentences = nltk.tokenize.sent_tokenize(row.body)
+        n_sents = len(body_sentences)
+        targets = [row.target] * n_sents
+        scores = self.rouge.compute(
+            predictions=body_sentences,
+            references=targets,
+            rouge_types=["rouge1", "rouge2", "rougeL"],
+            use_aggregator=False,
         )
-        self.model.eval()
-
-    @torch.no_grad()
-    def __call__(self, y_pred, y_true) -> Any:
-        inputs = self.tokenizer(y_pred, y_true, return_tensors="pt", padding=True)
-        outputs = self.model(**inputs)
-        scores = outputs.logits.softmax(dim=-1)
-        # Return probability for a paraphrase
-        return scores.T[1]
+        # selecting on sum of scores is the same as selecting on mean
+        sum_scores = [sum(v[i].fmeasure for v in scores.values()) for i in range(n_sents)]
+        argmax = max(range(n_sents), key=lambda x: sum_scores[x])
+        return body_sentences[argmax]
 
 
 def get_config_path_arg():
@@ -229,3 +230,27 @@ def title_to_quesiton2(title: str) -> str:
     else:
         s, _ = match.span()
         return title[s:] + "?"
+
+
+# class ParaphraseProbabilityScorer:
+#     """
+#     This class is a model based scores for seq2seq tasks 
+#     leveraging a paraphrase detection model
+#     """
+
+#     model_checkpoint = "coderpotter/adversarial-paraphrasing-detector"
+
+#     def __init__(self):
+#         self.tokenizer = AutoTokenizer.from_pretrained(self.model_checkpoint)
+#         self.model = AutoModelForSequenceClassification.from_pretrained(
+#             self.model_checkpoint
+#         )
+#         self.model.eval()
+
+#     @torch.no_grad()
+#     def __call__(self, y_pred, y_true) -> Any:
+#         inputs = self.tokenizer(y_pred, y_true, return_tensors="pt", padding=True)
+#         outputs = self.model(**inputs)
+#         scores = outputs.logits.softmax(dim=-1)
+#         # Return probability for a paraphrase
+#         return scores.T[1]
