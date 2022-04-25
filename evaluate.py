@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from utils import read_config
+from utils import EXTOracle, read_config
 from datasets import load_metric
 from baselines import BASELINES
 from tqdm import tqdm
@@ -65,21 +65,33 @@ def compute_metrics(df, model_name):
 
 
 def evaluate_baselines():
+    oracle = EXTOracle()
+
     dev_set_path = "reddit-syac/dev.csv"
     test_set_path = "reddit-syac/test.csv"
 
     result_dev_df = pd.DataFrame()
     result_test_df = pd.DataFrame()
 
+    dev_set = pd.read_csv(dev_set_path, index_col=0)
+    test_set = pd.read_csv(test_set_path, index_col=0)
+
     for name, pipeline in BASELINES.items():
-        dev_set = pd.read_csv(dev_set_path, index_col=0)
-        test_set = pd.read_csv(test_set_path, index_col=0)
         dev_pred, test_pred = predict_on_datasets(dev_set_path, test_set_path, pipeline)
         dev_set["prediction"] = dev_pred
         test_set["prediction"] = test_pred
-        dev_metrics, test_metrics = compute_metrics(dev_set, test_set, name)
+        dev_metrics = compute_metrics(dev_set, name)
+        test_metrics = compute_metrics(test_set, name)
         result_dev_df = pd.concat((result_dev_df, dev_metrics))
         result_test_df = pd.concat((result_test_df, test_metrics))
+
+    dev_set["prediction"] = dev_set.progress_apply(oracle.predict_on_row, axis=1)
+    test_set["prediction"] = test_set.progress_apply(oracle.predict_on_row, axis=1)
+
+    dev_metrics = compute_metrics(dev_set, "EXT-Oracle")
+    test_metrics = compute_metrics(test_set, "EXT-Oracle")
+    result_dev_df = pd.concat((result_dev_df, dev_metrics))
+    result_test_df = pd.concat((result_test_df, test_metrics))
 
     result_dev_df.to_csv("evaluation/dev_leaderboard.csv")
     result_test_df.to_csv("evaluation/test_leaderboard.csv")
