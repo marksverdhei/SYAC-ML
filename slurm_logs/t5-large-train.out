@@ -1,0 +1,64 @@
+
+Task and CPU usage stats:
+JobID           JobName  AllocCPUS   NTasks     MinCPU MinCPUTask     AveCPU    Elapsed ExitCode 
+------------ ---------- ---------- -------- ---------- ---------- ---------- ---------- -------- 
+59927        syac-train          1                                             02:21:30      0:0 
+59927.batch       batch          1        1   02:19:53          0   02:19:53   02:21:30      0:0 
+59927.extern     extern          1        1   00:00:00          0   00:00:00   02:21:30      0:0 
+
+Memory usage stats:
+JobID            MaxRSS MaxRSSTask     AveRSS MaxPages   MaxPagesTask   AvePages 
+------------ ---------- ---------- ---------- -------- -------------- ---------- 
+59927                                                                            
+59927.batch    6573156K          0   6573156K        0              0          0 
+59927.extern          0          0          0        0              0          0 
+
+Disk usage stats:
+JobID         MaxDiskRead MaxDiskReadTask    AveDiskRead MaxDiskWrite MaxDiskWriteTask   AveDiskWrite 
+------------ ------------ --------------- -------------- ------------ ---------------- -------------- 
+59927                                                                                                 
+59927.batch         6.69M               0          6.69M        0.01M                0          0.01M 
+59927.extern        0.01M               0          0.01M            0                0              0 
+
+GPU usage stats:
+Successfully retrieved statistics for job: 59927. 
++------------------------------------------------------------------------------+
+| GPU ID: 3                                                                    |
++====================================+=========================================+
+|-----  Execution Stats  ------------+-----------------------------------------|
+| Start Time                         | Mon Apr 25 13:15:34 2022                |
+| End Time                           | Mon Apr 25 15:37:03 2022                |
+| Total Execution Time (sec)         | 8489.49                                 |
+| No. of Processes                   | 1                                       |
++-----  Performance Stats  ----------+-----------------------------------------+
+| Energy Consumed (Joules)           | 548419                                  |
+| Power Usage (Watts)                | Avg: 157.945, Max: 248.53, Min: 35.827  |
+| Max GPU Memory Used (bytes)        | 16197353472                             |
+| SM Clock (MHz)                     | Avg: 1334, Max: 1410, Min: 765          |
+| Memory Clock (MHz)                 | Avg: 1215, Max: 1215, Min: 1215         |
+| SM Utilization (%)                 | Avg: 60, Max: 79, Min: 0                |
+| Memory Utilization (%)             | Avg: 24, Max: 37, Min: 0                |
+| PCIe Rx Bandwidth (megabytes)      | Avg: N/A, Max: N/A, Min: N/A            |
+| PCIe Tx Bandwidth (megabytes)      | Avg: N/A, Max: N/A, Min: N/A            |
++-----  Event Stats  ----------------+-----------------------------------------+
+| Single Bit ECC Errors              | 0                                       |
+| Double Bit ECC Errors              | 0                                       |
+| PCIe Replay Warnings               | 0                                       |
+| Critical XID Errors                | 0                                       |
++-----  Slowdown Stats  -------------+-----------------------------------------+
+| Due to - Power (%)                 | 0                                       |
+|        - Thermal (%)               | 0                                       |
+|        - Reliability (%)           | Not Supported                           |
+|        - Board Limit (%)           | Not Supported                           |
+|        - Low Utilization (%)       | Not Supported                           |
+|        - Sync Boost (%)            | 0                                       |
++--  Compute Process Utilization  ---+-----------------------------------------+
+| PID                                | 3397668                                 |
+|     Avg SM Utilization (%)         | 60                                      |
+|     Avg Memory Utilization (%)     | 22                                      |
++-----  Overall Health  -------------+-----------------------------------------+
+| Overall Health                     | Healthy                                 |
++------------------------------------+-----------------------------------------+
+
+
+Job 59927 completed at Mon Apr 25 15:37:03 CEST 2022

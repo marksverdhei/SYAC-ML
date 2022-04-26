@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=syac-predict
 #SBATCH --account=ec30
-#SBATCH --time=10:00:00
+#SBATCH --time=20:00:00
 #SBATCH --mem-per-gpu=10G
 #SBATCH --partition=accel
 #SBATCH --gpus=1
