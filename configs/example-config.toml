@@ -1,3 +1,9 @@
+# If you want to override the default data paths
+# [dataset]
+# train_path = "MY_PATH/MY_FILE.csv"
+# val_path = "MY_PATH/MY_FILE.csv"
+# test_path = "MY_PATH/MY_FILE.csv"
+
 [model]
 # Model name determines checkpoint and logs directory
 name = "unifiedqa-t5-base"
