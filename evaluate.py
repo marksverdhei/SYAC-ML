@@ -4,7 +4,7 @@ from utils import EXTOracle, read_config
 from datasets import load_metric
 from baselines import BASELINES
 from tqdm import tqdm
-from predict import predict_on_datasets
+from predict import predict_on_df
 from transformers import set_seed
 
 rouge = load_metric("rouge")
@@ -61,6 +61,7 @@ def compute_metrics(df, model_name):
 
     scores_df = pd.DataFrame(scores, index=[model_name])
     scores_df.index.name = "Model"
+    print(scores_df)
     return scores_df
 
 
@@ -77,7 +78,8 @@ def evaluate_baselines():
     test_set = pd.read_csv(test_set_path, index_col=0)
 
     for name, pipeline in BASELINES.items():
-        dev_pred, test_pred = predict_on_datasets(dev_set_path, test_set_path, pipeline)
+        dev_pred = predict_on_df(dev_set_path, pipeline)
+        test_pred = predict_on_df(test_set_path, pipeline)
         dev_set["prediction"] = dev_pred
         test_set["prediction"] = test_pred
         dev_metrics = compute_metrics(dev_set, name)
