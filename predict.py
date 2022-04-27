@@ -15,7 +15,7 @@ def predict_from_config(config):
     pipeline = TitleAnsweringPipeline.from_config(config)
     pipeline.tokenizer.model_max_length = 512
 
-    dev_predictions, test_predictions = predict_on_df(
+    dev_predictions = predict_on_df(
         dev_set_path, pipeline
     )
 
