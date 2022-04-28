@@ -1,0 +1,4 @@
+[model]
+name = "pegasus-large-zero-shot"
+tokenizer_path = "google/pegasus-large"
+model_path = "google/pegasus-large"
