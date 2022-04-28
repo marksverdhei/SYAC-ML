@@ -24,6 +24,7 @@ class DocumentPreprocessor:
         self.regex_args = config.get("regex_sub_args", None)
         self.cased = config.get("cased", True)
         self.qa_prompt = config.get("qa_prompt", None)
+        self.prefix = config.get("prefix", None)
 
     def __call__(self, title: str, body: str) -> str:
         if self.qa_prompt is not None:
@@ -44,6 +45,9 @@ class DocumentPreprocessor:
             sep_token = " "
 
         input_str = f"{title} {sep_token} {body}"
+
+        if self.prefix:
+            input_str = self.prefix + input_str
 
         if not self.cased:
             input_str = input_str.lower()
