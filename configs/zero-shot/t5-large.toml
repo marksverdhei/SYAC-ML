@@ -1,0 +1,7 @@
+[model]
+name = "t5-large-zero-shot"
+tokenizer_path = "t5-large"
+model_path = "t5-large"
+
+[preprocessor]
+prefix = "summarize: "
