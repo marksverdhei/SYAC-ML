@@ -1,0 +1,4 @@
+[model]
+name = "pegasus-xsum-zero-shot"
+tokenizer_path = "google/pegasus-xsum"
+model_path = "google/pegasus-xsum"

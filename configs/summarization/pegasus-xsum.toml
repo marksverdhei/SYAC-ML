@@ -1,7 +1,9 @@
 [model]
-name = "bart-large"
-tokenizer_path = "facebook/bart-large"
-model_path = "facebook/bart-large"
+# Model name determines checkpoint and directory and 
+name = "pegasus-xsum"
+tokenizer_path = "google/pegasus-xsum"
+model_path = "google/pegasus-xsum"
+# max_input_length = 1024
 
 [preprocessor]
 sep_token = '|'
@@ -10,17 +12,16 @@ cased = true
 [train]
 
 [train.training_args]
-num_train_epochs = 20
+num_train_epochs = 40
 per_device_eval_batch_size = 8
 per_device_train_batch_size = 8
-learning_rate = 3e-6
+learning_rate = 1e-5
 logging_steps = 256
 warmup_steps = 512
+optim = "adafactor"
 save_strategy = "epoch"
 evaluation_strategy = "epoch"
-weight_decay = 0.01
 save_total_limit = 2
-gradient_accumulation_steps = 2
 
 [train.early_stopping]
 early_stopping_patience = 4
