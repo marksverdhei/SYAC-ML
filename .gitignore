@@ -1,6 +1,7 @@
 # tensorboard 
 train_logs/
 checkpoints/
+scores.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
