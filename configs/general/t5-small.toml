@@ -1,0 +1,28 @@
+[model]
+name = "t5-small"
+tokenizer_path = "t5-small"
+model_path = "t5-small"
+
+[preprocessor]
+sep_token = '\n'
+cased = false
+# 0: pattern, 1: repl
+regex_sub_args = ["'(.*)'", '\1']
+
+[train]
+
+[train.training_args]
+seed = 42
+num_train_epochs = 20
+per_device_eval_batch_size = 8
+per_device_train_batch_size = 8
+learning_rate = 5e-6
+warmup_steps = 512
+logging_steps = 256
+save_strategy = "epoch"
+evaluation_strategy = "epoch"
+optim = "adafactor"
+save_total_limit = 2
+
+[train.early_stopping]
+early_stopping_patience = 4
