@@ -1,8 +1,10 @@
 import os
 import pandas as pd
-from utils import read_config
+from utils import read_config, EXTOracle
 from tqdm import tqdm
 from pipelines import TitleAnsweringPipeline
+from baselines import BASELINES
+
 
 tqdm.pandas()
 
@@ -47,9 +49,45 @@ def predict_on_df(eval_set_path, pipeline):
     return eval_predictions
 
 
+def predict_baselines():
+    oracle = EXTOracle()
+
+    dev_set_path = "reddit-syac/dev.csv"
+    test_set_path = "reddit-syac/test.csv"
+
+    paths_dict = {
+        "dev": dev_set_path,
+        "test": test_set_path,
+    }
+
+    for split in "dev", "test":
+        eval_set_path = paths_dict[split]
+
+        for name, pipeline in BASELINES.items():
+            preds_path = f"evaluation/{split}/{name}/"
+            if not os.path.exists(preds_path):
+                os.mkdir(preds_path)
+
+            dev_pred = predict_on_df(eval_set_path, pipeline)
+            dev_pred.to_csv(preds_path + "predictions.csv")
+
+
+        preds_path = f"evaluation/{split}/EXTOracle/"
+        if not os.path.exists(preds_path):
+            os.mkdir(preds_path)
+
+        eval_set = pd.read_csv(eval_set_path, index_col=0)
+        test_pred = eval_set.progress_apply(oracle.predict_on_row, axis=1)
+        test_pred.to_csv(preds_path + "predictions.csv")
+
 def main() -> None:
-    config = read_config()
-    predict_from_config(config)
+    predict_on_baselines = False
+    if predict_on_baselines:
+        predict_baselines()
+    else:
+        config = read_config()
+        predict_from_config(config)
+
 
 
 if __name__ == "__main__":

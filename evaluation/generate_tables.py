@@ -11,27 +11,33 @@ TEMPL_STR = """
 {dev_lb}
 """
 
-TEMPL_STR_ALL = TEMPL_STR + """
+TEMPL_STR_ALL = (
+    TEMPL_STR
+    + """
 
 ## Test set  
 
 {test_lb}
 """
+)
+
 
 def assemble_subdirs(leaderboard, split, mode):
     dirs = os.listdir(split)
     if mode == 1:
-        dirs = filter(lambda s: "zero" in s, dirs)
+        dirs = filter(lambda s: "Baseline" in s, dirs)
     elif mode == 2:
-        dirs = filter(lambda s: "zero" not in s, dirs)
+        dirs = filter(lambda s: "zero" in s, dirs)
 
     for dir in dirs:
-        scores_path = f"{split}/{dir}/scores.csv"
-        if os.path.exists(scores_path):
-            scores = pd.read_csv(scores_path, index_col=0)
-            leaderboard = pd.concat((leaderboard, scores))
-        else:
-            print("WANRING: did not find", scores_path, ", skipping")
+        for suffix in "", "-1024", "-2048":
+            scores_path = f"{split}/{dir}/scores{suffix}.csv"
+            if os.path.exists(scores_path):
+                scores = pd.read_csv(scores_path, index_col=0)
+                scores.index = [i + suffix for i in scores.index]
+                leaderboard = pd.concat((leaderboard, scores))
+        # else:
+        #     print("WANRING: did not find", scores_path, ", skipping")
 
     return leaderboard
 
@@ -52,37 +58,40 @@ def postprocess_leaderboard(df, format="md"):
     return df
 
 
-def create_leaderboard_df(split, mode, aggregate_baselines=False):
-    leaderboard = pd.read_csv(f"{split}_leaderboard.csv", index_col=0)
-    
-    if aggregate_baselines:
-        leaderboard = leaderboard.max().to_frame("Best baseline").T
+def create_leaderboard_df(split, mode):
+    leaderboard = pd.DataFrame()
 
     leaderboard = assemble_subdirs(leaderboard, split, mode)
-    leaderboard = leaderboard[["rouge1", "rouge2", "rougeL", "bleu"]]
+    leaderboard = leaderboard[["rouge1", "rouge2", "rougeL", "bleu", "meteor"]]
+    leaderboard[["rouge1", "rouge2", "rougeL", "meteor"]] *= 100
     return leaderboard
 
 
 def generate_table(*, format="md", aggregate_baselines=False, test=False, mode=0):
-    dev_lb = create_leaderboard_df("dev", aggregate_baselines=aggregate_baselines, mode=mode)
+    dev_lb = create_leaderboard_df(
+        "dev",
+        mode=mode,
+    )
     dev_lb = postprocess_leaderboard(dev_lb, format=format)
 
-
     if test:
-        test_lb = create_leaderboard_df("test", aggregate_baselines=aggregate_baselines, mode=mode)
+        test_lb = create_leaderboard_df(
+            "test", 
+            mode=mode,
+        )
         test_lb = postprocess_leaderboard(test_lb, format=format)
 
     if format == "md":
         with open("README.md", "w+") as f:
             if test:
-                f.write(TEMPL_STR_ALL.format(
-                    dev_lb=dev_lb.to_markdown(),
-                    test_lb=test_lb.to_markdown(),
-                ))
-            else:        
-                f.write(TEMPL_STR.format(
-                    dev_lb=dev_lb.to_markdown(),
-                ))
+                f.write(
+                    TEMPL_STR_ALL.format(
+                        dev_lb=dev_lb.to_markdown(), 
+                        test_lb=test_lb.to_markdown(),
+                    )
+                )
+            else:
+                f.write(TEMPL_STR.format(dev_lb=dev_lb.to_markdown(),))
     else:
         dev_lb.to_latex("dev_leaderboard.tex", escape=False)
         if test:
@@ -91,20 +100,24 @@ def generate_table(*, format="md", aggregate_baselines=False, test=False, mode=0
 
 def main():
     ap = ArgumentParser()
-    ap.add_argument("--test", action='store_true')
-    ap.add_argument("--latex", action='store_true')
-    ap.add_argument("--aggregate-baselines", action='store_true')
+    ap.add_argument("--test", action="store_true")
+    ap.add_argument("--latex", action="store_true")
+    ap.add_argument("--aggregate-baselines", action="store_true")
     ap.add_argument(
-        "--mode", 
-        type=int, 
+        "--mode",
+        type=int,
         default=0,
-        help="0: all, 1: zero shot only, 2: zero shot only, 3: fine tune only",
+        help="0: all, 1: baselines only, 2: zero shot only, 3: fine tune only",
     )
     args = ap.parse_args()
     print(args.mode)
 
     format = "latex" if args.latex else "md"
-    generate_table(format=format, test=args.test, mode=args.mode, aggregate_baselines=args.aggregate_baselines)
+    generate_table(
+        format=format,
+        test=args.test,
+        mode=args.mode,
+    )
 
 
 if __name__ == "__main__":
