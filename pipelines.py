@@ -1,6 +1,6 @@
 import os
 from abc import ABC, abstractmethod
-
+import toml
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, pipeline
 import torch
 from utils import DocumentPreprocessor, get_best_checkpoint
@@ -20,6 +20,9 @@ class TitleAnsweringPipeline(ABC):
 
     @staticmethod
     def from_config(config):
+        if isinstance(config, str):
+            config = toml.load(config)
+
         model_name = config["model"]["name"]
         tokenizer_path = config["model"]["tokenizer_path"]
         preprocessor_conf = config.get("preprocessor", {})

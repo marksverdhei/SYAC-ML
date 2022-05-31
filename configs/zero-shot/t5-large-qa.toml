@@ -1,0 +1,8 @@
+[model]
+name = "t5-large-zero-shot-qa"
+tokenizer_path = "t5-large"
+model_path = "t5-large"
+
+[preprocessor]
+prefix = "question: "
+sep_token = " context: "

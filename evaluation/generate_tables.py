@@ -102,7 +102,6 @@ def main():
     ap = ArgumentParser()
     ap.add_argument("--test", action="store_true")
     ap.add_argument("--latex", action="store_true")
-    ap.add_argument("--aggregate-baselines", action="store_true")
     ap.add_argument(
         "--mode",
         type=int,
