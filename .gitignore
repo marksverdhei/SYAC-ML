@@ -1,5 +1,5 @@
 # tensorboard 
-train_logs/
+# train_logs/
 checkpoints/
 scores.csv
 

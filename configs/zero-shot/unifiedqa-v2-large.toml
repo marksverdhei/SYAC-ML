@@ -1,0 +1,10 @@
+[model]
+name = "unifiedqa-v2-large-zero-shot"
+tokenizer_path = "t5-large"
+model_path = "allenai/unifiedqa-v2-t5-large-1251000"
+
+[preprocessor]
+sep_token = '\n'
+cased = false
+# 0: pattern, 1: repl
+regex_sub_args = ["'(.*)'", '\1']
