@@ -2,7 +2,7 @@
 #SBATCH --job-name=syac-train
 #SBATCH --account=ec30
 #SBATCH --time=20:00:00
-#SBATCH --mem-per-gpu=50G
+#SBATCH --mem-per-gpu=38G
 #SBATCH --partition=accel
 #SBATCH --gpus-per-node=1
 
